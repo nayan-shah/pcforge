@@ -2,9 +2,11 @@ import mongoose from 'mongoose';
 
 const { Schema } = mongoose;
 
+// URL validation helper used for image links and product URLs.
 const urlValidator = {
   validator: (value) => {
     if (!value) return true;
+
     try {
       const url = new URL(value);
       return ['http:', 'https:'].includes(url.protocol);
@@ -15,6 +17,7 @@ const urlValidator = {
   message: (props) => `${props.value} is not a valid URL`,
 };
 
+// Price entry schema for store-specific pricing information.
 const priceSchema = new Schema(
   {
     storeName: {
@@ -55,22 +58,21 @@ const priceSchema = new Schema(
   { _id: false }
 );
 
+// Main component schema with grouped fields for clarity.
 const componentSchema = new Schema(
   {
-    // Basic Information
+    // Basic information
     name: {
       type: String,
       required: [true, 'Component name is required'],
       trim: true,
       maxlength: [150, 'Component name cannot exceed 150 characters'],
-      index: true,
     },
     brand: {
       type: String,
       required: [true, 'Brand is required'],
       trim: true,
       maxlength: [80, 'Brand name cannot exceed 80 characters'],
-      index: true,
     },
     category: {
       type: String,
@@ -90,7 +92,6 @@ const componentSchema = new Schema(
         'Keyboard',
         'Mouse',
       ],
-      index: true,
     },
     description: {
       type: String,
@@ -109,7 +110,7 @@ const componentSchema = new Schema(
       default: [],
     },
 
-    // Technical Information
+    // Technical details and compatibility
     specifications: {
       type: Schema.Types.Mixed,
       default: {},
@@ -119,18 +120,17 @@ const componentSchema = new Schema(
       default: {},
     },
 
-    // Pricing
+    // Pricing data from multiple stores
     prices: {
       type: [priceSchema],
       default: [],
     },
 
-    // Inventory
+    // Inventory and discoverability
     stockStatus: {
       type: String,
       enum: ['In Stock', 'Out of Stock', 'Preorder'],
       default: 'In Stock',
-      index: true,
     },
     tags: {
       type: [
@@ -142,10 +142,9 @@ const componentSchema = new Schema(
         },
       ],
       default: [],
-      index: true,
     },
 
-    // Community
+    // Community review metadata
     rating: {
       type: Number,
       min: [0, 'Rating cannot be negative'],
@@ -158,12 +157,11 @@ const componentSchema = new Schema(
       default: 0,
     },
 
-    // System
+    // Ownership and audit trail
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Creator reference is required'],
-      index: true,
     },
   },
   {
@@ -173,9 +171,12 @@ const componentSchema = new Schema(
   }
 );
 
-// Text search for name, brand, and tags.
-componentSchema.index({ name: 'text', brand: 'text', tags: 'text' });
+// Useful indexes for filtering, sorting, and search.
 componentSchema.index({ category: 1, stockStatus: 1 });
+componentSchema.index({ brand: 1, category: 1 });
+componentSchema.index({ rating: -1 });
+componentSchema.index({ createdBy: 1 });
+componentSchema.index({ name: 'text', brand: 'text', tags: 'text' });
 componentSchema.index({ 'prices.currentPrice': 1 });
 
 const Component = mongoose.model('Component', componentSchema);
