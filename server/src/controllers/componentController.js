@@ -5,22 +5,34 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 
+const sendResponse = (res, statusCode, success, message, data = null) => {
+  return res.status(statusCode).json({ success, message, data });
+};
+
 /**
  * Create a new component.
- * Expects a valid component payload in req.body.
  */
 export const createComponent = async (req, res) => {
   try {
+    const { name, brand, category, createdBy } = req.body;
+
+    if (!name || !brand || !category || !createdBy) {
+      return sendResponse(res, 400, false, 'Name, brand, category, and createdBy are required.', null);
+    }
+
     const component = await Component.create(req.body);
-    return res.status(201).json({ success: true, data: component });
+    return sendResponse(res, 201, true, 'Component created successfully.', component);
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    if (error.name === 'ValidationError') {
+      return sendResponse(res, 400, false, 'Validation failed.', error.message);
+    }
+
+    return sendResponse(res, 500, false, 'Failed to create component.', error.message);
   }
 };
 
 /**
- * Retrieve all components from the catalog.
- * Supports optional search, category and brand filters, pagination, and sorting.
+ * Retrieve all components with search, filtering, sorting, and pagination.
  */
 export const getAllComponents = async (req, res) => {
   try {
@@ -29,39 +41,70 @@ export const getAllComponents = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const {
-      search,
-      category,
-      brand,
-      sortBy = 'newest',
-      order = 'desc',
+      search = '',
+      category = '',
+      brand = '',
+      minPrice,
+      maxPrice,
+      sort = 'newest',
     } = req.query;
 
     const filters = {};
-    if (search) filters.name = { $regex: search.trim(), $options: 'i' };
-    if (category) filters.category = category;
-    if (brand) filters.brand = brand;
 
-    const sortOptions = {};
-    if (sortBy === 'price') {
-      sortOptions['prices.0.currentPrice'] = order === 'asc' ? 1 : -1;
-    } else if (sortBy === 'rating') {
-      sortOptions.rating = order === 'asc' ? 1 : -1;
-    } else {
-      sortOptions.createdAt = order === 'asc' ? 1 : -1;
+    if (search) {
+      filters.$or = [
+        { name: { $regex: search.trim(), $options: 'i' } },
+        { brand: { $regex: search.trim(), $options: 'i' } },
+      ];
     }
 
-    const [components, total] = await Promise.all([
+    if (category) filters.category = category;
+    if (brand) filters.brand = { $regex: brand.trim(), $options: 'i' };
+
+    if (minPrice !== undefined || maxPrice !== undefined) {
+      filters['prices.currentPrice'] = {};
+
+      if (minPrice !== undefined) {
+        filters['prices.currentPrice'].$gte = Number(minPrice);
+      }
+
+      if (maxPrice !== undefined) {
+        filters['prices.currentPrice'].$lte = Number(maxPrice);
+      }
+    }
+
+    let sortOptions = { createdAt: -1 };
+
+    switch (sort) {
+      case 'oldest':
+        sortOptions = { createdAt: 1 };
+        break;
+      case 'priceLowToHigh':
+        sortOptions = { 'prices.currentPrice': 1 };
+        break;
+      case 'priceHighToLow':
+        sortOptions = { 'prices.currentPrice': -1 };
+        break;
+      case 'rating':
+        sortOptions = { rating: -1, reviewCount: -1 };
+        break;
+      default:
+        sortOptions = { createdAt: -1 };
+    }
+
+    const [components, totalCount] = await Promise.all([
       Component.find(filters).sort(sortOptions).skip(skip).limit(limit).lean(),
       Component.countDocuments(filters),
     ]);
 
-    return res.status(200).json({
-      success: true,
-      data: components,
-      meta: { page, limit, total, pages: Math.ceil(total / limit) },
+    return sendResponse(res, 200, true, 'Components fetched successfully.', {
+      components,
+      totalCount,
+      currentPage: page,
+      totalPages: Math.ceil(totalCount / limit),
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return sendResponse(res, 500, false, 'Failed to fetch components.', error.message);
   }
 };
 
@@ -71,18 +114,19 @@ export const getAllComponents = async (req, res) => {
 export const getComponentById = async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!isValidObjectId(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid component ID' });
+      return sendResponse(res, 400, false, 'Invalid component ID.', null);
     }
 
     const component = await Component.findById(id).lean();
     if (!component) {
-      return res.status(404).json({ success: false, message: 'Component not found' });
+      return sendResponse(res, 404, false, 'Component not found.', null);
     }
 
-    return res.status(200).json({ success: true, data: component });
+    return sendResponse(res, 200, true, 'Component fetched successfully.', component);
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return sendResponse(res, 500, false, 'Failed to fetch component.', error.message);
   }
 };
 
@@ -92,8 +136,9 @@ export const getComponentById = async (req, res) => {
 export const updateComponent = async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!isValidObjectId(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid component ID' });
+      return sendResponse(res, 400, false, 'Invalid component ID.', null);
     }
 
     const component = await Component.findByIdAndUpdate(id, req.body, {
@@ -102,12 +147,16 @@ export const updateComponent = async (req, res) => {
     }).lean();
 
     if (!component) {
-      return res.status(404).json({ success: false, message: 'Component not found' });
+      return sendResponse(res, 404, false, 'Component not found.', null);
     }
 
-    return res.status(200).json({ success: true, data: component });
+    return sendResponse(res, 200, true, 'Component updated successfully.', component);
   } catch (error) {
-    return res.status(400).json({ success: false, message: error.message });
+    if (error.name === 'ValidationError') {
+      return sendResponse(res, 400, false, 'Validation failed.', error.message);
+    }
+
+    return sendResponse(res, 500, false, 'Failed to update component.', error.message);
   }
 };
 
@@ -117,17 +166,18 @@ export const updateComponent = async (req, res) => {
 export const deleteComponent = async (req, res) => {
   try {
     const { id } = req.params;
+
     if (!isValidObjectId(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid component ID' });
-    }
-    // test comment
-    const component = await Component.findByIdAndDelete(id).lean();
-    if (!component) {
-      return res.status(404).json({ success: false, message: 'Component not found' });
+      return sendResponse(res, 400, false, 'Invalid component ID.', null);
     }
 
-    return res.status(200).json({ success: true, message: 'Component deleted successfully' });
+    const component = await Component.findByIdAndDelete(id).lean();
+    if (!component) {
+      return sendResponse(res, 404, false, 'Component not found.', null);
+    }
+
+    return sendResponse(res, 200, true, 'Component deleted successfully.', null);
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return sendResponse(res, 500, false, 'Failed to delete component.', error.message);
   }
 };
