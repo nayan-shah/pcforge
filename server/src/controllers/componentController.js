@@ -31,8 +31,8 @@ export const createComponent = async (req, res) => {
   }
 };
 
-/**
- * Retrieve all components with search, filtering, sorting, and pagination.
+/*
+  Retrieve all components with search, filtering, sorting, and pagination.
  */
 export const getAllComponents = async (req, res) => {
   try {
