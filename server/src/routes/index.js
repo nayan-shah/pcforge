@@ -1,5 +1,6 @@
 import express from 'express';
 import authRouter from './authRoutes.js';
+import componentRouter from './componentRoutes.js';
 
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.get('/health', (req, res) => {
 });
 
 router.use('/auth', authRouter);
+router.use('/components', componentRouter);
 
 export default router;
