@@ -21,6 +21,21 @@ const apiClient = axios.create({
   },
 });
 
+// ── Request interceptor ──────────────────────────────────────────────
+// Attach JWT token from localStorage to authorization headers if it exists.
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('pcforge_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // ── Response interceptor ─────────────────────────────────────────────
 // The backend always responds with { success, message, data }.
 // On success we return the full response so individual API functions can

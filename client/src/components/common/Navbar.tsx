@@ -1,6 +1,8 @@
-import { NavLink } from 'react-router-dom';
-import { HiShoppingCart, HiSearch, HiMenu } from 'react-icons/hi';
+import { useState } from 'react';
+import { NavLink, Link } from 'react-router-dom';
+import { HiShoppingCart, HiSearch, HiMenu, HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const links = [
   { label: 'Home', path: '/' },
@@ -11,6 +13,8 @@ const links = [
 
 export default function Navbar() {
   const { cart, setIsCartDrawerOpen } = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -70,20 +74,79 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Auth links */}
+          {/* Auth links / Profile dropdown */}
           <div className="hidden items-center gap-2 lg:flex">
-            <NavLink
-              to="/login"
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Login
-            </NavLink>
-            <NavLink
-              to="/register"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              Sign Up
-            </NavLink>
+            {isAuthenticated && user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 pr-3 hover:bg-slate-50 transition shadow-sm hover:shadow cursor-pointer"
+                >
+                  <img
+                    src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}
+                    alt={user.name}
+                    className="h-8 w-8 rounded-full object-cover border border-violet-100"
+                  />
+                  <span className="text-xs font-semibold text-slate-700 max-w-[100px] truncate">{user.name}</span>
+                  <HiChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isDropdownOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-slate-100 bg-white p-2 shadow-lg shadow-slate-900/5 z-20">
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <HiUser className="h-4 w-4 text-violet-500" />
+                        My Profile
+                      </Link>
+                      {user.role === 'admin' && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setIsDropdownOpen(false)}
+                          className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition"
+                        >
+                          <span className="h-2 w-2 rounded-full bg-violet-600 ml-1 mr-1" />
+                          Admin Panel
+                        </Link>
+                      )}
+                      <hr className="my-1 border-slate-100" />
+                      <button
+                        onClick={() => {
+                          logout();
+                          setIsDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-rose-600 hover:bg-rose-50/50 transition text-left cursor-pointer"
+                      >
+                        <HiLogout className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <>
+                <NavLink
+                  to="/login"
+                  className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Sign Up
+                </NavLink>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Icon */}
