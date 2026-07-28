@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { HiOutlinePencilSquare, HiOutlineTrash } from 'react-icons/hi2';
 import DataTable from '../common/DataTable';
+import DeleteConfirmModal from './DeleteConfirmModal';
 import type { ComponentDetail } from '../../types/component';
 
 /**
@@ -8,19 +10,46 @@ import type { ComponentDetail } from '../../types/component';
  * Purely presentational — all data and callbacks come from props.
  * Re-uses the generic DataTable component for consistent styling,
  * and adds thumbnail previews + Edit / Delete action buttons.
+ *
+ * The delete action opens a proper confirmation modal rather than
+ * using the browser's blocking window.confirm() dialog.
  */
 
 interface ComponentsTableProps {
   components: ComponentDetail[];
   onEdit: (component: ComponentDetail) => void;
-  onDelete: (id: string) => void;
+  /** Called with the component's _id after the user confirms deletion. */
+  onDelete: (id: string) => Promise<void> | void;
+}
+
+interface PendingDelete {
+  id: string;
+  name: string;
 }
 
 export default function ComponentsTable({ components, onEdit, onDelete }: ComponentsTableProps) {
-  const handleDelete = (id: string, name: string) => {
-    if (window.confirm(`Delete "${name}"? This action cannot be undone.`)) {
-      onDelete(id);
+  // Tracks which row the user has clicked Delete on
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (id: string, name: string) => {
+    setPendingDelete({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await onDelete(pendingDelete.id);
+    } finally {
+      setIsDeleting(false);
+      setPendingDelete(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    if (!isDeleting) setPendingDelete(null);
   };
 
   const columns = [
@@ -45,7 +74,9 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
     },
     {
       header: 'Brand',
-      accessor: (item: ComponentDetail) => item.brand,
+      accessor: (item: ComponentDetail) => (
+        <span className="text-slate-600 dark:text-slate-300">{item.brand}</span>
+      ),
     },
     {
       header: 'Category',
@@ -61,7 +92,7 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
         const price = item.prices?.[0];
         return price
           ? `${price.currency} ${price.currentPrice.toLocaleString()}`
-          : '—';
+          : <span className="text-slate-400">—</span>;
       },
     },
     {
@@ -87,13 +118,13 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
         <div className="flex items-center gap-2">
           <button
             onClick={() => onEdit(item)}
-            className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600"
+            className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
           >
             <HiOutlinePencilSquare className="h-3.5 w-3.5" />
             Edit
           </button>
           <button
-            onClick={() => handleDelete(item._id, item.name)}
+            onClick={() => handleDeleteClick(item._id, item.name)}
             className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500"
           >
             <HiOutlineTrash className="h-3.5 w-3.5" />
@@ -105,18 +136,32 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
   ];
 
   return (
-    <DataTable
-      columns={columns}
-      data={components}
-      rowKey={(item) => item._id}
-      emptyState={
-        <div className="space-y-2">
-          <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">No components found</p>
-          <p className="text-sm text-slate-500">
-            Add a new component using the button above, or adjust your search filters.
-          </p>
-        </div>
-      }
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={components}
+        rowKey={(item) => item._id}
+        emptyState={
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+              No components found
+            </p>
+            <p className="text-sm text-slate-500">
+              Add a new component using the button above, or adjust your search filters.
+            </p>
+          </div>
+        }
+      />
+
+      {/* Delete confirmation modal — rendered in a portal-like pattern at the bottom */}
+      {pendingDelete && (
+        <DeleteConfirmModal
+          itemName={pendingDelete.name}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCancelDelete}
+          isDeleting={isDeleting}
+        />
+      )}
+    </>
   );
 }

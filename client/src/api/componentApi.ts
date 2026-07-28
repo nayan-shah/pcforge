@@ -12,17 +12,22 @@ import type {
  *
  * Each function maps 1:1 to a backend endpoint. No React state, no hooks —
  * this module is consumed exclusively by custom hooks.
+ *
+ * All mutating requests (POST, PUT) use FormData so that image File objects
+ * can be included in the same request as JSON-compatible fields.
  */
-
-// ── Placeholder ──────────────────────────────────────────────────────
-// TODO: Replace with the real authenticated user ID once auth is integrated.
-const PLACEHOLDER_CREATED_BY = '000000000000000000000000';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
 /**
  * Converts the typed form data into a FormData object suitable for
  * multipart/form-data submission (required for image file uploads).
+ *
+ * Key decisions:
+ * - `createdBy` is NOT sent — the backend derives it from the JWT.
+ * - `existingImages[]` tells the server which Cloudinary URLs to keep.
+ * - `prices` is always sent as an empty JSON array (required by the validator).
+ * - `tags[]` is sent as individual entries so Express can parse them as an array.
  */
 function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   const fd = new FormData();
@@ -33,7 +38,7 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   fd.append('description', data.description || '');
   fd.append('stockStatus', data.stockStatus);
 
-  // Tags: comma-separated string → JSON array
+  // Tags: comma-separated string → individual FormData entries
   const tagsArray = data.tags
     ? data.tags.split(',').map((t) => t.trim()).filter(Boolean)
     : [];
@@ -44,28 +49,31 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
     fd.append('specifications', JSON.stringify(data.specifications));
   }
 
-  // New image files
+  // New image files selected by the user
   if (data.images && data.images.length > 0) {
     Array.from(data.images).forEach((file) => {
       fd.append('images', file);
     });
   }
 
-  // Existing image URLs to keep (edit mode only)
+  // Existing image URLs to keep on the server (edit mode only)
+  // Sent as existingImages[] so Express can parse them as an array.
   if (isEdit && data.existingImages) {
     data.existingImages.forEach((url) => fd.append('existingImages[]', url));
   }
 
-  // Required by the backend model
-  if (!isEdit) {
-    fd.append('createdBy', PLACEHOLDER_CREATED_BY);
-  }
-
-  // The validator expects these fields to exist even if empty
+  // The validator requires an images array even when no files are uploaded.
+  // When no new files are selected, send the kept existing URLs as the array.
   if (!data.images || data.images.length === 0) {
-    fd.append('images', JSON.stringify(data.existingImages || []));
+    const fallbackImages = isEdit ? (data.existingImages ?? []) : [];
+    fallbackImages.forEach((url) => fd.append('images', url));
+    // If there are no images at all, send an empty array marker
+    if (fallbackImages.length === 0) {
+      fd.append('images', '');
+    }
   }
 
+  // Required by the express-validator (must be a valid JSON array)
   fd.append('prices', JSON.stringify([]));
 
   return fd;
@@ -100,6 +108,7 @@ export async function getComponentById(
 
 /**
  * Create a new component. Sends as FormData for image upload support.
+ * The backend sets `createdBy` from the JWT — it must not be in the body.
  */
 export async function createComponent(
   data: ComponentFormData,
@@ -116,6 +125,7 @@ export async function createComponent(
 
 /**
  * Update an existing component. Sends as FormData for image upload support.
+ * Pass `existingImages` in the form data to tell the server which URLs to keep.
  */
 export async function updateComponent(
   id: string,
@@ -133,6 +143,7 @@ export async function updateComponent(
 
 /**
  * Delete a component by its Mongo ObjectId.
+ * The server will also purge its Cloudinary images.
  */
 export async function deleteComponent(id: string): Promise<void> {
   await apiClient.delete(`/components/${id}`);

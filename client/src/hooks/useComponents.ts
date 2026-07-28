@@ -38,6 +38,7 @@ export default function useComponents() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [category, setCategory] = useState('');
+  const [brand, setBrand] = useState('');
   const [sort, setSort] = useState('newest');
 
   // ── Editing state ────────────────────────────────────────────────
@@ -84,6 +85,7 @@ export default function useComponents() {
       const result = await componentApi.getComponents({
         search: debouncedSearch || undefined,
         category: category || undefined,
+        brand: brand || undefined,
         sort,
         page: currentPage,
         limit: PAGE_SIZE,
@@ -98,7 +100,7 @@ export default function useComponents() {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch, category, sort, currentPage]);
+  }, [debouncedSearch, category, brand, sort, currentPage]);
 
   // Auto-fetch when filters or page change
   useEffect(() => {
@@ -168,6 +170,8 @@ export default function useComponents() {
     setSearch,
     category,
     setCategory,
+    brand,
+    setBrand,
     sort,
     setSort,
     setCurrentPage,

@@ -60,6 +60,8 @@ export default function Components() {
     setSearch,
     category,
     setCategory,
+    brand,
+    setBrand,
     sort,
     setSort,
     setCurrentPage,
@@ -133,9 +135,9 @@ export default function Components() {
           </button>
         </div>
 
-        {/* ── Filters bar ─────────────────────────────────────── */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Search */}
+        {/* ── Filters bar ──────────────────────────────────────── */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {/* Search — spans 2 columns */}
           <div className="relative sm:col-span-2">
             <HiOutlineMagnifyingGlass className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -166,6 +168,18 @@ export default function Components() {
               ))}
             </select>
           </div>
+
+          {/* Brand filter */}
+          <input
+            type="text"
+            value={brand}
+            onChange={(e) => {
+              setBrand(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Filter by brand…"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
 
           {/* Sort */}
           <select

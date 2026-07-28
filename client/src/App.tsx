@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
+import AdminRoute from './components/admin/AdminRoute';
 import Admin from './pages/Admin';
 import AI from './pages/AI';
 import Builder from './pages/Builder';
@@ -28,9 +29,9 @@ function App() {
         <Route path="ai" element={<AI />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="admin" element={<AdminLanding />} />
-        <Route path="admin/home" element={<DashboardHome />} />
-        <Route path="admin/components" element={<Components />} />
+        <Route path="admin" element={<AdminRoute><AdminLanding /></AdminRoute>} />
+        <Route path="admin/home" element={<AdminRoute><DashboardHome /></AdminRoute>} />
+        <Route path="admin/components" element={<AdminRoute><Components /></AdminRoute>} />
         <Route path="components" element={<ComponentsPage />} />
       </Route>
     </Routes>
