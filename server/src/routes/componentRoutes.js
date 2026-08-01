@@ -12,7 +12,10 @@ const router = express.Router();
 // Get all components (paginated, filterable, sortable)
 router.get('/', componentController.getAllComponents);
 
-// Get a single component by ID
+// Get related products for a component by its ID.
+router.get('/:id/related', componentController.getRelatedComponents);
+
+// Get a single component by ID.
 router.get('/:id', componentController.getComponentById);
 
 // ── Admin-only routes (JWT + admin role required) ────────────────────

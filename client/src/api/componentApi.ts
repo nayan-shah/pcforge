@@ -108,6 +108,18 @@ export async function getComponentById(
 }
 
 /**
+ * Fetch related components for a selected product.
+ */
+export async function getRelatedComponents(
+  id: string,
+): Promise<ComponentDetail[]> {
+  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>(
+    `/components/${id}/related`,
+  );
+  return response.data.data;
+}
+
+/**
  * Create a new component. Sends as FormData for image upload support.
  * The backend sets `createdBy` from the JWT — it must not be in the body.
  */

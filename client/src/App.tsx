@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Product from './pages/Product';
+import ProductDetails from './pages/ProductDetails';
 import Profile from './pages/Profile';
 import Register from './pages/Register';
 import AdminLanding from './pages/admin/AdminLanding';
@@ -25,6 +26,7 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="builder" element={<Builder />} />
         <Route path="product" element={<Product />} />
+        <Route path="components/:id" element={<ProductDetails />} />
         <Route path="product/:id" element={<Product />} />
         <Route path="compare" element={<Compare />} />
         <Route path="ai" element={<AI />} />
