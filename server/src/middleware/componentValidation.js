@@ -1,102 +1,55 @@
 import { body, validationResult } from 'express-validator';
+import { deleteCloudinaryImages, getUploadedImageUrls } from './uploadMiddleware.js';
+import { ApiError } from '../utils/apiError.js';
 
+const CATEGORIES = ['CPU', 'GPU', 'Motherboard', 'RAM', 'SSD', 'HDD', 'PSU', 'Cabinet', 'Cooler', 'Monitor', 'Keyboard', 'Mouse'];
+const STOCK_STATUSES = ['In Stock', 'Out of Stock', 'Preorder'];
+const JSON_FIELDS = ['specifications', 'compatibility', 'prices'];
 
-export const componentValidationRules = [
-  // Validate name (required, 3-100 chars)
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Name is required')
-    .isLength({ min: 3, max: 100 })
-    .withMessage('Name must be between 3 and 100 characters'),
-
-  // Validate brand (required)
-  body('brand')
-    .trim()
-    .notEmpty()
-    .withMessage('Brand is required'),
-
-  // Validate category (required, enum)
-  body('category')
-    .trim()
-    .notEmpty()
-    .withMessage('Category is required')
-    .isIn([
-      'CPU',
-      'GPU',
-      'Motherboard',
-      'RAM',
-      'SSD',
-      'HDD',
-      'PSU',
-      'Cabinet',
-      'Cooler',
-      'Monitor',
-      'Keyboard',
-      'Mouse',
-    ])
-    .withMessage(
-      'Category must be one of: CPU, GPU, Motherboard, RAM, SSD, HDD, PSU, Cabinet, Cooler, Monitor, Keyboard, Mouse'
-    ),
-
-  // Validate description (optional, max 2000 chars)
-  body('description')
-    .optional({ nullable: true, checkFalsy: true })
-    .trim()
-    .isLength({ max: 2000 })
-    .withMessage('Description cannot exceed 2000 characters'),
-
-  // Validate images array
-  body('images')
-    .isArray()
-    .withMessage('Images must be an array'),
-
-  // Validate prices array
-  body('prices')
-    .isArray()
-    .withMessage('Prices must be an array'),
-
-  // Validate stockStatus (optional, enum)
-  body('stockStatus')
-    .optional()
-    .trim()
-    .isIn(['In Stock', 'Out of Stock', 'Preorder'])
-    .withMessage('Stock status must be one of: In Stock, Out of Stock, Preorder'),
-
-  // Validate rating (optional, float 0-5)
-  body('rating')
-    .optional({ nullable: true })
-    .isFloat({ min: 0, max: 5 })
-    .withMessage('Rating must be a number between 0 and 5'),
-
-  // Validate reviewCount (optional, non-negative integer)
-  body('reviewCount')
-    .optional({ nullable: true })
-    .isInt({ min: 0 })
-    .withMessage('Review count must be a non-negative integer'),
-];
-
-
-// Middleware to check validation results and return formatted errors
-export const validateComponent = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    // Return errors in clean JSON format
-    return res.status(400).json({
-      success: false,
-      message: 'Validation error',
-      errors: errors.array().map((err) => ({
-        field: err.path || err.param,
-        message: err.msg,
-        value: err.value,
-        location: err.location,
-      })),
-    });
+const parseJsonFields = (req, res, next) => {
+  try {
+    for (const field of JSON_FIELDS) {
+      if (typeof req.body[field] === 'string' && req.body[field].trim()) {
+        req.body[field] = JSON.parse(req.body[field]);
+      }
+    }
+    if (req.body['tags[]'] !== undefined) {
+      req.body.tags = Array.isArray(req.body['tags[]']) ? req.body['tags[]'] : [req.body['tags[]']];
+    }
+    next();
+  } catch {
+    next(new ApiError(400, 'Specifications, compatibility, and prices must contain valid JSON.'));
   }
-  next();
 };
 
+const validationRules = [
+  body('name').trim().notEmpty().withMessage('Name is required.').isLength({ max: 150 }).withMessage('Name cannot exceed 150 characters.'),
+  body('brand').trim().notEmpty().withMessage('Brand is required.').isLength({ max: 80 }).withMessage('Brand cannot exceed 80 characters.'),
+  body('category').trim().isIn(CATEGORIES).withMessage('Choose a valid component category.'),
+  body('description').optional({ checkFalsy: true }).trim().isLength({ max: 2000 }).withMessage('Description cannot exceed 2000 characters.'),
+  body('stockStatus').optional({ checkFalsy: true }).isIn(STOCK_STATUSES).withMessage('Choose a valid stock status.'),
+  body('tags').optional().isArray().withMessage('Tags must be an array.'),
+  body('tags.*').optional().trim().isLength({ max: 40 }).withMessage('Tags cannot exceed 40 characters.'),
+  body('specifications').optional().isObject().withMessage('Specifications must be an object.'),
+  body('compatibility').optional().isObject().withMessage('Compatibility must be an object.'),
+  body('prices').optional().isArray().withMessage('Prices must be an array.'),
+  body('prices.*.storeName').if(body('prices').exists()).trim().notEmpty().withMessage('Each price needs a store name.'),
+  body('prices.*.productUrl').if(body('prices').exists()).isURL({ protocols: ['http', 'https'], require_protocol: true }).withMessage('Each price needs a valid product URL.'),
+  body('prices.*.currentPrice').if(body('prices').exists()).isFloat({ min: 0 }).withMessage('Prices must be non-negative.'),
+  body('prices.*.currency').if(body('prices').exists()).isLength({ min: 3, max: 3 }).withMessage('Currency must be a 3-letter code.'),
+  body('rating').optional({ checkFalsy: true }).isFloat({ min: 0, max: 5 }).withMessage('Rating must be between 0 and 5.'),
+  body('reviewCount').optional({ checkFalsy: true }).isInt({ min: 0 }).withMessage('Review count must be a non-negative integer.'),
+];
 
-export const componentValidator = [...componentValidationRules, validateComponent];
+const reportValidation = (req, res, next) => {
+  const result = validationResult(req);
+  if (result.isEmpty()) return next();
 
-export default componentValidator;
+  deleteCloudinaryImages(getUploadedImageUrls(req))
+    .finally(() => next(new ApiError(400, 'Validation failed.', result.array().map((error) => ({
+      field: error.path,
+      message: error.msg,
+    })))));
+};
+
+export const componentValidator = [parseJsonFields, ...validationRules, reportValidation];

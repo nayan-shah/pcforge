@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { ApiError } from '../utils/apiError.js';
 
 /**
  * Verifies the Bearer JWT and attaches the decoded payload to req.user.
@@ -10,7 +11,7 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
   if (!token) {
-    return res.status(401).json({ success: false, message: 'Authorization token missing' });
+    return next(new ApiError(401, 'Authorization token missing.'));
   }
 
   try {
@@ -18,7 +19,7 @@ const authMiddleware = (req, res, next) => {
     req.user = decoded;
     next();
   } catch {
-    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    return next(new ApiError(401, 'Invalid or expired token.'));
   }
 };
 
@@ -33,16 +34,16 @@ export const adminMiddleware = async (req, res, next) => {
     const user = await User.findById(req.user.userId).select('role').lean();
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return next(new ApiError(401, 'User not found.'));
     }
 
     if (user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Admin access required' });
+      return next(new ApiError(403, 'Admin access required.'));
     }
 
     next();
-  } catch {
-    return res.status(500).json({ success: false, message: 'Authorization check failed' });
+  } catch (error) {
+    return next(error);
   }
 };
 

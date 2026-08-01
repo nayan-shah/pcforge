@@ -1,68 +1,37 @@
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary.js';
+import { ApiError } from '../utils/apiError.js';
 
-
-// Cloudinary storage configuration for multer
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
   params: {
     folder: 'pcforge/components',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    resource_type: 'image',
   },
 });
 
-// Filter to accept image mime-types only
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files are allowed.'), false);
-  }
-};
-
-// Multer upload config (5MB limit per file)
 const upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024,
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 5 },
+  fileFilter: (req, file, callback) => {
+    if (!file.mimetype.startsWith('image/')) {
+      callback(new ApiError(400, 'Only image files are allowed.'));
+      return;
+    }
+    callback(null, true);
   },
-  fileFilter: fileFilter,
 });
 
-// Middleware to handle uploading up to 5 images
-export const uploadMultipleImages = (req, res, next) => {
-  const uploadArray = upload.array('images', 5);
+export const getUploadedImageUrls = (req) =>
+  (req.files || []).map((file) => file.path).filter(Boolean);
 
-  uploadArray(req, res, (err) => {
-    if (err) {
-      let errorMessage = err.message;
-
-      // Map multer-specific limits to custom messages
-      if (err instanceof multer.MulterError) {
-        if (err.code === 'LIMIT_FILE_SIZE') {
-          errorMessage = 'File size too large. Maximum size allowed is 5MB per file.';
-        } else if (err.code === 'LIMIT_UNEXPECTED_FILE') {
-          errorMessage = 'Too many files. Maximum allowed is 5 images.';
-        }
-      }
-
-      return res.status(400).json({
-        success: false,
-        message: 'Image upload failed',
-        error: errorMessage,
-      });
-    }
-
-    // Attach uploaded secure URLs to req.body.images
-    if (req.files && req.files.length > 0) {
-      req.body.images = req.files.map((file) => file.path);
-    } else {
-      req.body.images = req.body.images || [];
-    }
-
-    next();
-  });
+export const deleteCloudinaryImages = async (urls = []) => {
+  await Promise.allSettled(urls.map(async (url) => {
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[^/.]+$/);
+    if (match) await cloudinary.uploader.destroy(match[1]);
+  }));
 };
 
-export default uploadMultipleImages;
+export const uploadMultipleImages = upload.array('images', 5);
