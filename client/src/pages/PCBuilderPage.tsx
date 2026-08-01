@@ -1,5 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createBuild } from '../api/buildApi';
+import { getComponents } from '../api/componentApi';
+import { useAuth } from '../context/AuthContext';
+import { useBuilder } from '../context/BuilderContext';
 import type { BuildStep, BuilderOption, ComponentCategory, SelectedComponent } from '../types/builder';
+import type { ComponentDetail } from '../types/component';
 import BuildStepper from '../components/builder/BuildStepper';
 import ComponentSelector from '../components/builder/ComponentSelector';
 import SelectedComponentCard from '../components/builder/SelectedComponentCard';
@@ -18,121 +23,127 @@ const buildSteps: BuildStep[] = [
   { category: 'Cooler', title: 'Choose your cooling', description: 'Keep your system cool under load' },
 ];
 
-const options: BuilderOption[] = [
-  {
-    id: 'cpu-1',
-    category: 'CPU',
-    name: 'AMD Ryzen 9 7950X',
-    brand: 'AMD',
-    price: 649.99,
-    powerWatts: 170,
-    description: '16 cores, 32 threads, excellent multi-core performance.',
-    compatibilityNotes: ['Check motherboard socket compatibility'],
-  },
-  {
-    id: 'cpu-2',
-    category: 'CPU',
-    name: 'Intel Core i9-14900K',
-    brand: 'Intel',
-    price: 589.99,
-    powerWatts: 125,
-    description: 'High frequency performance for gaming and content creation.',
-    compatibilityNotes: ['Check motherboard socket compatibility'],
-  },
-  {
-    id: 'gpu-1',
-    category: 'GPU',
-    name: 'NVIDIA RTX 4090',
-    brand: 'NVIDIA',
-    price: 1599.99,
-    powerWatts: 450,
-    description: 'Top-tier graphics performance for 4K gaming.',
-    compatibilityNotes: ['Requires a high-wattage PSU and sufficient case clearance'],
-  },
-  {
-    id: 'ram-1',
-    category: 'RAM',
-    name: 'Corsair Vengeance DDR5 32GB',
-    brand: 'Corsair',
-    price: 199.99,
-    powerWatts: 10,
-    description: 'High-speed DDR5 memory for next-gen systems.',
-    compatibilityNotes: ['Check motherboard RAM support'],
-  },
-  {
-    id: 'motherboard-1',
-    category: 'Motherboard',
-    name: 'ASUS ROG Strix X670E',
-    brand: 'ASUS',
-    price: 449.99,
-    powerWatts: 65,
-    description: 'Premium AM5 motherboard with PCIe 5.0 and Wi-Fi 6E.',
-    compatibilityNotes: ['Supports AMD Ryzen 7000 series processors'],
-  },
-  {
-    id: 'psu-1',
-    category: 'PSU',
-    name: 'Seasonic Focus GX-1000',
-    brand: 'Seasonic',
-    price: 209.99,
-    powerWatts: 1000,
-    description: 'Reliable 80+ Gold power supply with modular cables.',
-    compatibilityNotes: ['Suitable for high-end GPU builds'],
-  },
-  {
-    id: 'storage-1',
-    category: 'Storage',
-    name: 'Samsung 990 Pro 2TB',
-    brand: 'Samsung',
-    price: 229.99,
-    powerWatts: 6,
-    description: 'High-performance NVMe SSD for fast boot and load times.',
-    compatibilityNotes: ['Requires NVMe M.2 slot'],
-  },
-  {
-    id: 'case-1',
-    category: 'Case',
-    name: 'Lian Li Lancool II',
-    brand: 'Lian Li',
-    price: 149.99,
-    powerWatts: 0,
-    description: 'Airflow-focused mid-tower chassis with tempered glass.',
-    compatibilityNotes: ['Supports ATX motherboards and large GPUs'],
-  },
-  {
-    id: 'cooler-1',
-    category: 'Cooler',
-    name: 'Noctua NH-D15',
-    brand: 'Noctua',
-    price: 109.99,
-    powerWatts: 5,
-    description: 'High-performance air cooler for quiet operation.',
-    compatibilityNotes: ['Large cooler height may affect case compatibility'],
-  },
-];
+const builderToBackendCategoryMap: Record<ComponentCategory, string[]> = {
+  CPU: ['CPU'],
+  GPU: ['GPU'],
+  RAM: ['RAM'],
+  Motherboard: ['Motherboard'],
+  PSU: ['PSU'],
+  Storage: ['SSD', 'HDD'],
+  Case: ['Cabinet'],
+  Cooler: ['Cooler'],
+};
 
-const initialSelection: SelectedComponent[] = buildSteps.map((step) => ({
-  category: step.category,
-  option: null,
-}));
+const selectionKeyMap: Record<ComponentCategory, 'cpu' | 'motherboard' | 'ram' | 'gpu' | 'storage' | 'psu' | 'case' | 'cooler'> = {
+  CPU: 'cpu',
+  Motherboard: 'motherboard',
+  RAM: 'ram',
+  GPU: 'gpu',
+  Storage: 'storage',
+  PSU: 'psu',
+  Case: 'case',
+  Cooler: 'cooler',
+};
 
-export default function PCBuilderPage() {
-  const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [selectedComponents, setSelectedComponents] = useState<SelectedComponent[]>(initialSelection);
-  const [loading, setLoading] = useState(false);
+const toCompatibilityNotes = (component: ComponentDetail): string[] => {
+  const notes = Array.isArray(component.compatibility?.notes)
+    ? component.compatibility.notes.map((note) => String(note))
+    : [];
 
-  const activeCategory = buildSteps[activeStepIndex].category;
-  const availableOptions = useMemo(
-    () => options.filter((option) => option.category === activeCategory),
-    [activeCategory]
+  if (notes.length > 0) {
+    return notes;
+  }
+
+  const summary = component.compatibility && typeof component.compatibility === 'object'
+    ? Object.values(component.compatibility).map((value) => String(value)).filter(Boolean)
+    : [];
+
+  return summary.slice(0, 3);
+};
+
+const mapComponentToBuilderOption = (component: ComponentDetail): BuilderOption => {
+  const lowestPrice = component.prices?.length
+    ? component.prices.reduce((min, offer) => Math.min(min, Number(offer.currentPrice ?? 0)), Number.POSITIVE_INFINITY)
+    : 0;
+
+  const powerFromSpecifications = Number(
+    component.specifications?.powerConsumption ??
+    component.specifications?.TDP ??
+    component.specifications?.maxPowerDraw ??
+    component.specifications?.power ??
+    0,
   );
 
-  const selectedOption = selectedComponents.find((item) => item.category === activeCategory)?.option ?? null;
+  const categoryMap: Record<string, ComponentCategory> = {
+    CPU: 'CPU',
+    GPU: 'GPU',
+    RAM: 'RAM',
+    Motherboard: 'Motherboard',
+    PSU: 'PSU',
+    SSD: 'Storage',
+    HDD: 'Storage',
+    Cabinet: 'Case',
+    Cooler: 'Cooler',
+  } as const;
+
+  return {
+    id: component._id,
+    name: component.name,
+    brand: component.brand,
+    price: Number.isFinite(lowestPrice) ? lowestPrice : 0,
+    powerWatts: Number.isFinite(powerFromSpecifications) ? powerFromSpecifications : 0,
+    description: component.description || 'No further details available.',
+    category: categoryMap[component.category] ?? 'CPU',
+    compatibilityNotes: toCompatibilityNotes(component),
+  };
+};
+
+export default function PCBuilderPage() {
+  const { isAuthenticated, user } = useAuth();
+  const { selections, selectedComponents, setSelection, clearBuild, totalPrice, totalPower } = useBuilder();
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [availableOptions, setAvailableOptions] = useState<BuilderOption[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+
+  const activeCategory = buildSteps[activeStepIndex].category;
+
+  useEffect(() => {
+    let ignore = false;
+
+    const loadOptions = async () => {
+      setIsLoadingOptions(true);
+
+      try {
+        const categories = builderToBackendCategoryMap[activeCategory];
+        const requests = categories.map((category) => getComponents({ category, limit: 20 }));
+        const results = await Promise.all(requests);
+        const merged = results.flatMap((result) => result.components.map((component) => mapComponentToBuilderOption(component)));
+
+        if (!ignore) {
+          setAvailableOptions(merged.filter((option) => option.category === activeCategory));
+        }
+      } catch (error) {
+        if (!ignore) {
+          setAvailableOptions([]);
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoadingOptions(false);
+        }
+      }
+    };
+
+    loadOptions();
+    return () => {
+      ignore = true;
+    };
+  }, [activeCategory]);
+
+  const selectedOption = selections[selectionKeyMap[activeCategory]];
 
   function handleSelectOption(option: BuilderOption) {
-    setSelectedComponents((current) =>
-      current.map((item) => (item.category === option.category ? { ...item, option } : item))
-    );
+    setSelection(selectionKeyMap[option.category], option);
   }
 
   function handleSelectStep(index: number) {
@@ -147,9 +158,44 @@ export default function PCBuilderPage() {
     setActiveStepIndex((current) => Math.max(current - 1, 0));
   }
 
-  function handleSaveBuild() {
+  async function handleSaveBuild() {
+    if (!isAuthenticated) {
+      alert('Please log in to save your build.');
+      return;
+    }
+
+    if (selectedComponents.some((item) => item.option === null)) {
+      alert('Please finish selecting all required build parts before saving.');
+      return;
+    }
+
     setLoading(true);
-    setTimeout(() => setLoading(false), 500);
+
+    try {
+      const payload = {
+        name: `${user?.name ?? 'My'} Build`,
+        components: selectedComponents.map((item) => ({
+          componentId: item.option!.id,
+          category: item.category,
+          name: item.option!.name,
+          brand: item.option!.brand,
+          price: item.option!.price,
+          powerWatts: item.option!.powerWatts,
+          image: item.option!.description || '',
+        })),
+        totalPrice,
+        totalPower,
+      };
+
+      await createBuild(payload);
+      alert('Build saved successfully.');
+      clearBuild();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to save build.';
+      alert(message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleAskAI() {
@@ -172,7 +218,7 @@ export default function PCBuilderPage() {
             category={activeCategory}
             options={availableOptions}
             selectedId={selectedOption?.id ?? null}
-            loading={loading}
+            loading={loading || isLoadingOptions}
             onSelect={handleSelectOption}
           />
 
@@ -223,8 +269,8 @@ export default function PCBuilderPage() {
             <h2 className="text-xl font-semibold text-slate-900">Build details</h2>
             <div className="mt-5 space-y-3 text-slate-600">
               <p>Work through each step to create a complete, compatible PC build.</p>
-              <p>The builder uses UI-only logic; no backend integration is implemented yet.</p>
-              <p>The totals refresh instantly as you select parts.</p>
+              <p>Selected parts are now backed by live catalog data from the API.</p>
+              <p>Current estimated totals: ₹{totalPrice.toFixed(2)} · {totalPower}W</p>
             </div>
           </div>
         </div>

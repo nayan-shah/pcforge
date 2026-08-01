@@ -97,6 +97,30 @@ export const getComponentById = async (req, res, next) => {
   }
 };
 
+export const getRelatedComponents = async (req, res, next) => {
+  try {
+    if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
+
+    const current = await Component.findById(req.params.id).select('category brand').lean();
+    if (!current) throw notFound('Component not found.');
+
+    const related = await Component.find({
+      _id: { $ne: req.params.id },
+      $or: [
+        { category: current.category },
+        { brand: current.brand },
+      ],
+    })
+      .sort({ rating: -1, createdAt: -1 })
+      .limit(6)
+      .lean();
+
+    return sendSuccess(res, 200, 'Related components fetched successfully.', related);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const updateComponent = async (req, res, next) => {
   const uploadedImages = getUploadedImageUrls(req);
   try {

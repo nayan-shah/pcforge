@@ -19,6 +19,17 @@ export interface BuilderOption {
   compatibilityNotes: string[];
 }
 
+export interface BuilderSelections {
+  cpu: BuilderOption | null;
+  motherboard: BuilderOption | null;
+  ram: BuilderOption | null;
+  gpu: BuilderOption | null;
+  storage: BuilderOption | null;
+  psu: BuilderOption | null;
+  case: BuilderOption | null;
+  cooler: BuilderOption | null;
+}
+
 export interface SelectedComponent {
   category: ComponentCategory;
   option: BuilderOption | null;
