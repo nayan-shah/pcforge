@@ -1,162 +1,103 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import ProductGrid from '../components/catalog/ProductGrid';
-import SearchBar from '../components/catalog/SearchBar';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { HiOutlineArrowPath, HiOutlineExclamationCircle } from 'react-icons/hi2';
 import ProductFilters from '../components/catalog/ProductFilters';
+import ProductGrid, { ProductGridSkeleton } from '../components/catalog/ProductGrid';
+import SearchBar from '../components/catalog/SearchBar';
 import SortDropdown from '../components/catalog/SortDropdown';
 import Pagination from '../components/catalog/Pagination';
-import type { ComponentSummary } from '../types/component';
+import EmptyState from '../components/common/EmptyState';
+import useCatalogComponents from '../hooks/useCatalogComponents';
 
-const sampleComponents: ComponentSummary[] = [
-  {
-    _id: '1',
-    name: 'Ryzen 9 7950X',
-    brand: 'AMD',
-    category: 'CPU',
-    images: ['https://via.placeholder.com/400x300'],
-    stockStatus: 'In Stock',
-    tags: ['Zen 4', '16-Core', 'AM5'],
-    rating: 4.8,
-    prices: [
-      {
-        storeName: 'FastPC',
-        productUrl: 'https://example.com/product/1',
-        currentPrice: 699,
-        currency: 'USD',
-        availability: 'In Stock',
-        lastUpdated: new Date().toISOString(),
-      },
-    ],
-  },
-  {
-    _id: '2',
-    name: 'GeForce RTX 4080',
-    brand: 'NVIDIA',
-    category: 'GPU',
-    images: ['https://via.placeholder.com/400x300'],
-    stockStatus: 'Preorder',
-    tags: ['Ada Lovelace', '16GB', 'Ray Tracing'],
-    rating: 4.7,
-    prices: [
-      {
-        storeName: 'GPU Mart',
-        productUrl: 'https://example.com/product/2',
-        currentPrice: 1199,
-        currency: 'USD',
-        availability: 'Preorder',
-        lastUpdated: new Date().toISOString(),
-      },
-    ],
-  },
-  {
-    _id: '3',
-    name: 'Corsair Vengeance DDR5 32GB',
-    brand: 'Corsair',
-    category: 'RAM',
-    images: ['https://via.placeholder.com/400x300'],
-    stockStatus: 'In Stock',
-    tags: ['DDR5', '32GB', '6000MHz'],
-    rating: 4.6,
-    prices: [
-      {
-        storeName: 'MemoryHub',
-        productUrl: 'https://example.com/product/3',
-        currentPrice: 219,
-        currency: 'USD',
-        availability: 'In Stock',
-        lastUpdated: new Date().toISOString(),
-      },
-    ],
-  },
-];
+const PAGE_SIZE = 12;
+const getPage = (value: string | null) => Math.max(1, Number.parseInt(value || '1', 10) || 1);
 
 export default function ComponentsPage() {
-  const navigate = useNavigate();
-  const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('');
-  const [brand, setBrand] = useState('');
-  const [sortBy, setSortBy] = useState('newest');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search') ?? '';
+  const category = searchParams.get('category') ?? '';
+  const brand = searchParams.get('brand') ?? '';
+  const sort = searchParams.get('sort') ?? 'newest';
+  const page = getPage(searchParams.get('page'));
+  const [searchInput, setSearchInput] = useState(search);
+  const [brandInput, setBrandInput] = useState(brand);
 
-  const filteredComponents = useMemo(() => {
-    let result = sampleComponents;
-
-    if (query) {
-      result = result.filter((component) =>
-        component.name.toLowerCase().includes(query.toLowerCase())
-      );
-    }
-
-    if (category) {
-      result = result.filter((component) => component.category === category);
-    }
-
-    if (brand) {
-      result = result.filter((component) => component.brand === brand);
-    }
-
-    result = result.slice();
-    if (sortBy === 'price') {
-      result.sort((a, b) => (a.prices[0]?.currentPrice ?? 0) - (b.prices[0]?.currentPrice ?? 0));
-    } else if (sortBy === 'rating') {
-      result.sort((a, b) => b.rating - a.rating);
-    }
-
-    return result;
-  }, [query, category, brand, sortBy]);
-
-  const totalPages = Math.max(Math.ceil(filteredComponents.length / pageSize), 1);
-  const pageComponents = filteredComponents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const handleSelect = (id: string) => {
-    navigate(`/product/${id}`);
+  const updateParams = (updates: Record<string, string>) => {
+    const next = new URLSearchParams(searchParams);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    });
+    if (!('page' in updates)) next.delete('page');
+    setSearchParams(next, { replace: true });
   };
+
+  useEffect(() => setSearchInput(search), [search]);
+  useEffect(() => setBrandInput(brand), [brand]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (searchInput !== search) updateParams({ search: searchInput });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [searchInput, search]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (brandInput !== brand) updateParams({ brand: brandInput });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [brandInput, brand]);
+
+  const { data, isLoading, error, retry } = useCatalogComponents({
+    search: search || undefined,
+    category: category || undefined,
+    brand: brand || undefined,
+    sort,
+    page,
+    limit: PAGE_SIZE,
+  });
 
   return (
     <section className="space-y-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+        <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Components</h1>
-            <p className="mt-2 text-slate-600">Discover PC parts for your next build.</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-600">PC components</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Build with confidence</h1>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">Compare parts, prices, and availability for your next PC.</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <SearchBar value={query} onChange={setQuery} />
-            <SortDropdown value={sortBy} onChange={setSortBy} />
+          <div className="space-y-3">
+            <SearchBar value={searchInput} onChange={setSearchInput} />
+            <SortDropdown value={sort} onChange={(value) => updateParams({ sort: value })} />
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
         <ProductFilters
           category={category}
-          brand={brand}
-          onCategoryChange={setCategory}
-          onBrandChange={setBrand}
+          brand={brandInput}
+          onCategoryChange={(value) => updateParams({ category: value })}
+          onBrandChange={setBrandInput}
         />
 
         <div className="space-y-6">
-          {isLoading ? (
-            <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-600 shadow-sm">
-              Loading components...
+          {!isLoading && !error && data && (
+            <p className="text-sm text-slate-500 dark:text-slate-400">{data.totalCount} component{data.totalCount === 1 ? '' : 's'} found</p>
+          )}
+          {isLoading ? <ProductGridSkeleton count={PAGE_SIZE} /> : error ? (
+            <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center dark:border-rose-900 dark:bg-rose-950/30">
+              <HiOutlineExclamationCircle className="mx-auto h-11 w-11 text-rose-500" />
+              <h2 className="mt-4 text-lg font-semibold text-rose-800 dark:text-rose-200">Unable to load components</h2>
+              <p className="mt-2 text-sm text-rose-700 dark:text-rose-300">{error}</p>
+              <button type="button" onClick={retry} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500"><HiOutlineArrowPath className="h-4 w-4" /> Retry</button>
             </div>
-          ) : error ? (
-            <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center text-rose-700 shadow-sm">
-              <p className="text-lg font-semibold">Unable to load components</p>
-              <p className="mt-2">{error}</p>
-            </div>
-          ) : (
+          ) : data?.components.length ? (
             <>
-              <ProductGrid components={pageComponents} onSelect={handleSelect} />
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <ProductGrid components={data.components} />
+              {data.totalPages > 1 && <Pagination currentPage={data.currentPage} totalPages={data.totalPages} onPageChange={(nextPage) => updateParams({ page: String(nextPage) })} />}
             </>
+          ) : (
+            <EmptyState title="No components found" description="Try clearing a filter or searching for a different component." />
           )}
         </div>
       </div>

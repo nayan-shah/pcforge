@@ -14,6 +14,7 @@ import ComponentsTable from '../../components/admin/ComponentsTable';
 import ComponentForm from '../../components/admin/ComponentForm';
 import LoadingState from '../../components/common/LoadingState';
 import EmptyState from '../../components/common/EmptyState';
+import Pagination from '../../components/catalog/Pagination';
 import useComponents from '../../hooks/useComponents';
 import type { ComponentFormData, Toast } from '../../types/component';
 
@@ -52,6 +53,7 @@ export default function Components() {
     // Data
     components,
     totalPages,
+    totalCount,
     currentPage,
     isLoading,
     error,
@@ -121,7 +123,7 @@ export default function Components() {
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
               {isLoading
                 ? 'Loading…'
-                : `${components.length} component${components.length !== 1 ? 's' : ''} on this page`}
+                : `${totalCount} component${totalCount !== 1 ? 's' : ''} found`}
             </p>
           </div>
 
@@ -236,39 +238,7 @@ export default function Components() {
             />
 
             {/* ── Pagination ──────────────────────────────────── */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-2">
-                <button
-                  disabled={currentPage <= 1}
-                  onClick={() => setCurrentPage(currentPage - 1)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  Previous
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                      page === currentPage
-                        ? 'bg-violet-600 text-white'
-                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-
-                <button
-                  disabled={currentPage >= totalPages}
-                  onClick={() => setCurrentPage(currentPage + 1)}
-                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  Next
-                </button>
-              </div>
-            )}
+            {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
           </>
         )}
       </div>

@@ -5,8 +5,9 @@ interface SortDropdownProps {
 
 const options = [
   { value: 'newest', label: 'Newest' },
-  { value: 'price', label: 'Price: Low to High' },
-  { value: 'rating', label: 'Rating' },
+  { value: 'priceLowToHigh', label: 'Price: Low to High' },
+  { value: 'priceHighToLow', label: 'Price: High to Low' },
+  { value: 'rating', label: 'Top rated' },
 ];
 
 export default function SortDropdown({ value, onChange }: SortDropdownProps) {

@@ -3,10 +3,9 @@ import ProductCard from './ProductCard';
 
 interface RelatedProductsProps {
   products: ComponentSummary[];
-  onSelect: (id: string) => void;
 }
 
-export default function RelatedProducts({ products, onSelect }: RelatedProductsProps) {
+export default function RelatedProducts({ products }: RelatedProductsProps) {
   if (products.length === 0) {
     return null;
   }
@@ -19,7 +18,7 @@ export default function RelatedProducts({ products, onSelect }: RelatedProductsP
       </div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {products.map((product) => (
-          <ProductCard key={product._id} component={product} onSelect={onSelect} />
+          <ProductCard key={product._id} component={product} />
         ))}
       </div>
     </section>

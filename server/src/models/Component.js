@@ -108,6 +108,10 @@ const componentSchema = new Schema(
         },
       ],
       default: [],
+      validate: {
+        validator: (images) => images.length <= 5,
+        message: 'A component can have at most 5 images.',
+      },
     },
 
     // Technical details and compatibility

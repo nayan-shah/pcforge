@@ -30,6 +30,7 @@ export default function useComponents() {
   // ── List state ───────────────────────────────────────────────────
   const [components, setComponents] = useState<ComponentDetail[]>([]);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -93,10 +94,15 @@ export default function useComponents() {
 
       setComponents(result.components);
       setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
+      if (result.totalPages > 0 && currentPage > result.totalPages) {
+        setCurrentPage(result.totalPages);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load components.';
       setError(message);
       setComponents([]);
+      setTotalCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -146,13 +152,16 @@ export default function useComponents() {
       try {
         await componentApi.deleteComponent(id);
         addToast('success', 'Component deleted successfully.');
+        if (components.length === 1 && currentPage > 1) {
+          setCurrentPage((page) => page - 1);
+        }
         await fetchComponents();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to delete component.';
         addToast('error', message);
       }
     },
-    [addToast, fetchComponents],
+    [addToast, components.length, currentPage, fetchComponents],
   );
 
   // ── Public API ───────────────────────────────────────────────────
@@ -161,6 +170,7 @@ export default function useComponents() {
     // Data
     components,
     totalPages,
+    totalCount,
     currentPage,
     isLoading,
     error,

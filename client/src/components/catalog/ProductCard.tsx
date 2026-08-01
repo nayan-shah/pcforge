@@ -1,70 +1,24 @@
+import { Link } from 'react-router-dom';
 import type { ComponentSummary } from '../../types/component';
 
-interface ProductCardProps {
-  component: ComponentSummary;
-  onSelect: (id: string) => void;
-}
+interface ProductCardProps { component: ComponentSummary; }
 
-export default function ProductCard({ component, onSelect }: ProductCardProps) {
-  const primaryPrice = component.prices?.[0]?.currentPrice ?? null;
-  const currency = component.prices?.[0]?.currency ?? 'USD';
+const priceFormatter = (value: number, currency: string) => new Intl.NumberFormat(undefined, { style: 'currency', currency, maximumFractionDigits: 0 }).format(value);
+
+export default function ProductCard({ component }: ProductCardProps) {
+  const lowestOffer = component.prices.reduce<ComponentSummary['prices'][number] | undefined>((lowest, offer) => !lowest || offer.currentPrice < lowest.currentPrice ? offer : lowest, undefined);
+  const stockClass = component.stockStatus === 'In Stock' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300' : component.stockStatus === 'Preorder' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300';
 
   return (
-    <article
-      className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-      onClick={() => onSelect(component._id)}
-    >
-      <div className="flex h-48 items-center justify-center bg-slate-100">
-        <img
-          src={component.images?.[0] ?? '/placeholder-image.svg'}
-          alt={component.name}
-          className="h-full max-h-48 w-auto object-contain"
-        />
+    <Link to={`/product/${component._id}`} className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:border-violet-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-violet-500 dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex h-48 items-center justify-center bg-slate-100 p-4 dark:bg-slate-800">
+        {component.images[0] ? <img src={component.images[0]} alt={component.name} className="h-full w-full object-contain transition duration-300 group-hover:scale-105" /> : <span className="text-4xl" aria-label="No product image" role="img">📦</span>}
       </div>
-
       <div className="space-y-3 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-              {component.category}
-            </p>
-            <h3 className="mt-2 text-lg font-semibold text-slate-900">{component.name}</h3>
-          </div>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-medium ${
-              component.stockStatus === 'In Stock'
-                ? 'bg-emerald-100 text-emerald-700'
-                : component.stockStatus === 'Preorder'
-                ? 'bg-amber-100 text-amber-700'
-                : 'bg-rose-100 text-rose-700'
-            }`}
-          >
-            {component.stockStatus}
-          </span>
-        </div>
-
-        <p className="text-sm text-slate-600">{component.brand}</p>
-
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-sm text-slate-500">Starting at</p>
-            <p className="text-xl font-semibold text-slate-900">
-              {primaryPrice !== null ? `${currency} ${primaryPrice.toFixed(2)}` : 'Price unavailable'}
-            </p>
-          </div>
-          <div className="rounded-2xl bg-slate-100 px-3 py-1 text-sm text-slate-700">
-            {component.rating.toFixed(1)} ★
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {component.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
-              {tag}
-            </span>
-          ))}
-        </div>
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-600">{component.category}</p><h2 className="mt-2 line-clamp-2 text-lg font-semibold text-slate-900 dark:text-slate-100">{component.name}</h2></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${stockClass}`}>{component.stockStatus}</span></div>
+        <p className="text-sm text-slate-600 dark:text-slate-300">{component.brand}</p>
+        <div className="flex items-end justify-between gap-3"><div><p className="text-xs text-slate-500">Starting at</p><p className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">{lowestOffer ? priceFormatter(lowestOffer.currentPrice, lowestOffer.currency) : 'Price unavailable'}</p></div><span className="text-sm text-amber-500">★ {component.rating.toFixed(1)}</span></div>
       </div>
-    </article>
+    </Link>
   );
 }

@@ -21,8 +21,6 @@ const categories = [
   'Mouse',
 ];
 
-const brands = ['All', 'AMD', 'NVIDIA', 'Corsair', 'ASUS', 'Samsung', 'Logitech', 'Noctua'];
-
 export default function ProductFilters({
   category,
   brand,
@@ -59,18 +57,13 @@ export default function ProductFilters({
           <label htmlFor="brand-filter" className="mb-2 block text-sm font-medium text-slate-700">
             Brand
           </label>
-          <select
+          <input
             id="brand-filter"
             value={brand}
             onChange={(event) => onBrandChange(event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none"
-          >
-            {brands.map((item) => (
-              <option key={item} value={item === 'All' ? '' : item}>
-                {item}
-              </option>
-            ))}
-          </select>
+            placeholder="e.g. AMD, Corsair"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900 outline-none focus:border-violet-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          />
         </div>
       </div>
     </div>

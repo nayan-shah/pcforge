@@ -25,6 +25,7 @@ function App() {
         <Route path="register" element={<Register />} />
         <Route path="builder" element={<Builder />} />
         <Route path="product" element={<Product />} />
+        <Route path="product/:id" element={<Product />} />
         <Route path="compare" element={<Compare />} />
         <Route path="ai" element={<AI />} />
         <Route path="dashboard" element={<Dashboard />} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { HiOutlineXMark, HiOutlinePhoto } from 'react-icons/hi2';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { HiOutlineXMark, HiOutlinePhoto, HiOutlinePlus } from 'react-icons/hi2';
 import type { ComponentDetail, ComponentFormData } from '../../types/component';
 
 // ── Category-specific specification fields ───────────────────────────
@@ -44,6 +44,15 @@ const labelClass = 'space-y-2 text-sm';
 const labelTextClass = 'font-medium text-slate-700 dark:text-slate-200';
 const errorClass = 'mt-1 text-xs text-rose-500';
 
+const emptyPriceOffer = { storeName: '', productUrl: '', currentPrice: '' as const, currency: 'INR', availability: 'Available' };
+
+const formDefaults = (component?: ComponentDetail | null): ComponentFormData => ({
+  name: component?.name ?? '', brand: component?.brand ?? '', category: component?.category ?? 'CPU',
+  description: component?.description ?? '', stockStatus: component?.stockStatus ?? 'In Stock',
+  tags: component?.tags?.join(', ') ?? '', specifications: (component?.specifications as Record<string, string>) ?? {},
+  prices: component?.prices?.map(({ storeName, productUrl, currentPrice, currency, availability }) => ({ storeName, productUrl, currentPrice, currency, availability })) ?? [],
+});
+
 // ── Props ────────────────────────────────────────────────────────────
 
 interface ComponentFormProps {
@@ -65,22 +74,17 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
 
   const {
+    control,
     register,
     handleSubmit,
     watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ComponentFormData>({
-    defaultValues: {
-      name: initialData?.name ?? '',
-      brand: initialData?.brand ?? '',
-      category: initialData?.category ?? 'CPU',
-      description: initialData?.description ?? '',
-      stockStatus: initialData?.stockStatus ?? 'In Stock',
-      tags: initialData?.tags?.join(', ') ?? '',
-      specifications: (initialData?.specifications as Record<string, string>) ?? {},
-    },
+    defaultValues: formDefaults(initialData),
   });
+
+  const { fields: priceFields, append: appendPrice, remove: removePrice } = useFieldArray({ control, name: 'prices' });
 
   const selectedCategory = watch('category');
   const selectedImages = watch('images');
@@ -101,15 +105,7 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
 
   // Reset form when initialData changes (e.g. switching from add to edit)
   useEffect(() => {
-    reset({
-      name: initialData?.name ?? '',
-      brand: initialData?.brand ?? '',
-      category: initialData?.category ?? 'CPU',
-      description: initialData?.description ?? '',
-      stockStatus: initialData?.stockStatus ?? 'In Stock',
-      tags: initialData?.tags?.join(', ') ?? '',
-      specifications: (initialData?.specifications as Record<string, string>) ?? {},
-    });
+    reset(formDefaults(initialData));
     setExistingImages(initialData?.images ?? []);
   }, [initialData, reset]);
 
@@ -231,6 +227,28 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
           ))}
         </div>
       )}
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <span className={labelTextClass}>Price offers</span>
+            <p className="mt-1 text-xs text-slate-500">Add the retailers shoppers can compare.</p>
+          </div>
+          <button type="button" onClick={() => appendPrice({ ...emptyPriceOffer })} className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300">
+            <HiOutlinePlus className="h-4 w-4" /> Add offer
+          </button>
+        </div>
+        {priceFields.map((field, index) => (
+          <div key={field.id} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.6fr_.8fr_.55fr_auto] dark:border-slate-700 dark:bg-slate-900">
+            <input {...register(`prices.${index}.storeName`, { required: true })} className={inputClass} placeholder="Store name" />
+            <input {...register(`prices.${index}.productUrl`, { required: true, pattern: /^https?:\/\/.+/ })} className={inputClass} placeholder="https://store.example/product" />
+            <input type="number" min="0" step="0.01" {...register(`prices.${index}.currentPrice`, { required: true, min: 0, valueAsNumber: true })} className={inputClass} placeholder="Price" />
+            <input {...register(`prices.${index}.currency`, { required: true, minLength: 3, maxLength: 3 })} className={inputClass} maxLength={3} placeholder="INR" />
+            <button type="button" onClick={() => removePrice(index)} className="rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/40">Remove</button>
+          </div>
+        ))}
+        {errors.prices && <p className={errorClass}>Please complete each price offer before saving.</p>}
+      </div>
 
       {/* ── Image Upload ──────────────────────────────────────── */}
       <div className="space-y-3">

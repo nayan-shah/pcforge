@@ -108,6 +108,7 @@ export const updateComponent = async (req, res, next) => {
     const keptImages = (Array.isArray(requestedKeptImages) ? requestedKeptImages : [requestedKeptImages])
       .filter((url) => typeof url === 'string' && existing.images.includes(url));
     const images = [...new Set([...keptImages, ...uploadedImages])];
+    if (images.length > 5) throw new ApiError(400, 'A component can have at most 5 images.');
     const component = await Component.findByIdAndUpdate(
       req.params.id,
       buildComponentPayload(req.body, images),

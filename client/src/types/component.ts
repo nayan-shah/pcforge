@@ -65,6 +65,13 @@ export interface ComponentFormData {
   stockStatus: string;
   tags: string;
   specifications: Record<string, string>;
+  prices: Array<{
+    storeName: string;
+    productUrl: string;
+    currentPrice: number | '';
+    currency: string;
+    availability: string;
+  }>;
   images?: FileList | null;
   existingImages?: string[];
 }

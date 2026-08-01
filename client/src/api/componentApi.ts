@@ -26,7 +26,7 @@ import type {
  * Key decisions:
  * - `createdBy` is NOT sent — the backend derives it from the JWT.
  * - `existingImages[]` tells the server which Cloudinary URLs to keep.
- * - `prices` is always sent as an empty JSON array (required by the validator).
+ * - Complex values are serialized explicitly so multipart requests preserve types.
  * - `tags[]` is sent as individual entries so Express can parse them as an array.
  */
 function buildFormData(data: ComponentFormData, isEdit = false): FormData {
@@ -48,6 +48,10 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   if (data.specifications && Object.keys(data.specifications).length > 0) {
     fd.append('specifications', JSON.stringify(data.specifications));
   }
+  fd.append('prices', JSON.stringify(data.prices.map((price) => ({
+    ...price,
+    currentPrice: Number(price.currentPrice),
+  }))));
 
   // New image files selected by the user
   if (data.images && data.images.length > 0) {
@@ -72,9 +76,6 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
       fd.append('images', '');
     }
   }
-
-  // Required by the express-validator (must be a valid JSON array)
-  fd.append('prices', JSON.stringify([]));
 
   return fd;
 }
