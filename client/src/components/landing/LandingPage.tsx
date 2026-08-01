@@ -8,10 +8,8 @@ import {
   HiShieldCheck, 
   HiClock,
   HiLightningBolt,
-  HiCheck,
-  HiShoppingCart
+  HiCheck
 } from 'react-icons/hi';
-import { useCart } from '../../context/CartContext';
 
 // Helper to format currency in INR
 const formatPrice = (price: number) => {
@@ -147,7 +145,6 @@ const categoryStrip = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { addToCart, isItemInCart, setIsCartDrawerOpen } = useCart();
 
   const [activeTab, setActiveTab] = useState('All');
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -346,7 +343,6 @@ export default function LandingPage() {
         {/* Horizontal scrollable deals list */}
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {productsData.slice(0, 4).map((product) => {
-            const isInCart = isItemInCart(product.id);
             return (
               <div 
                 key={product.id}
@@ -392,24 +388,10 @@ export default function LandingPage() {
                     </div>
 
                     <button
-                      onClick={() => isInCart ? setIsCartDrawerOpen(true) : addToCart(product)}
-                      className={`w-full py-2.5 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                        isInCart
-                          ? 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
-                          : 'bg-slate-950 text-white hover:bg-slate-800 shadow-sm'
-                      }`}
+                      onClick={() => navigate(`/components/${product.id}`)}
+                      className="w-full py-2.5 rounded-full bg-slate-950 text-xs font-bold text-white transition hover:bg-slate-800 shadow-sm"
                     >
-                      {isInCart ? (
-                        <>
-                          <HiCheck className="h-4 w-4" />
-                          Go to Cart
-                        </>
-                      ) : (
-                        <>
-                          <HiShoppingCart className="h-3.5 w-3.5" />
-                          Add to Cart
-                        </>
-                      )}
+                      Compare Prices
                     </button>
                   </div>
                 </div>
@@ -493,7 +475,6 @@ export default function LandingPage() {
         {/* Dynamic products list grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProducts.map((product) => {
-            const isInCart = isItemInCart(product.id);
             return (
               <div 
                 key={product.id}
@@ -530,21 +511,10 @@ export default function LandingPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => isInCart ? setIsCartDrawerOpen(true) : addToCart(product)}
-                      className={`px-3 py-1.5 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
-                        isInCart
-                          ? 'bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100'
-                          : 'bg-slate-950 text-white hover:bg-slate-800'
-                      }`}
+                      onClick={() => navigate(`/components/${product.id}`)}
+                      className="px-3 py-1.5 rounded-full bg-slate-950 text-[10px] font-bold text-white transition hover:bg-slate-800"
                     >
-                      {isInCart ? (
-                        <>
-                          <HiCheck className="h-3 w-3" />
-                          Cart
-                        </>
-                      ) : (
-                        'Add'
-                      )}
+                      View
                     </button>
                   </div>
                 </div>

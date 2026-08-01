@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { HiShoppingCart, HiSearch, HiMenu, HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
-import { useCart } from '../../context/CartContext';
+import { HiSearch, HiMenu, HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 
 const links = [
@@ -12,10 +11,8 @@ const links = [
 ];
 
 export default function Navbar() {
-  const { cart, setIsCartDrawerOpen } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
@@ -58,22 +55,8 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Right: Cart, Auth, and Mobile Toggle */}
+        {/* Right: Auth and Mobile Toggle */}
         <div className="flex items-center gap-4">
-          {/* Cart Icon Option on Top */}
-          <button
-            onClick={() => setIsCartDrawerOpen(true)}
-            className="relative flex items-center gap-2 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition shadow-sm hover:shadow"
-          >
-            <HiShoppingCart className="h-5 w-5 text-violet-500" />
-            <span className="hidden sm:inline">Cart</span>
-            {totalItems > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white shadow-md animate-pulse">
-                {totalItems}
-              </span>
-            )}
-          </button>
-
           {/* Auth links / Profile dropdown */}
           <div className="hidden items-center gap-2 lg:flex">
             {isAuthenticated && user ? (
