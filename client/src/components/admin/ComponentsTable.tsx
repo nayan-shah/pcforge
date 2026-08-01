@@ -90,8 +90,10 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
       header: 'Price',
       accessor: (item: ComponentDetail) => {
         const price = item.prices?.[0];
+        const offerPrice = price?.currentPrice ?? price?.price ?? 0;
+        const offerCurrency = price?.currency ?? 'INR';
         return price
-          ? `${price.currency} ${price.currentPrice.toLocaleString()}`
+          ? `${offerCurrency} ${offerPrice.toLocaleString()}`
           : <span className="text-slate-400">—</span>;
       },
     },

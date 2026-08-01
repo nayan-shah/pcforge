@@ -1,11 +1,26 @@
 export interface PriceOffer {
-  storeName: string;
+  store?: string;
+  storeName?: string;
   productUrl: string;
-  currentPrice: number;
-  currency: string;
-  availability: string;
-  lastUpdated: string;
+  price?: number;
+  currentPrice?: number;
+  currency?: string;
+  inStock?: boolean;
+  availability?: string;
+  lastUpdated?: string;
 }
+
+export type ComponentPriceFormEntry = {
+  store?: string;
+  storeName?: string;
+  productUrl: string;
+  price?: number | '';
+  currentPrice?: number | '';
+  currency?: string;
+  inStock?: boolean;
+  availability?: string;
+  lastUpdated?: string;
+};
 
 export interface ComponentSummary {
   _id: string;
@@ -65,13 +80,7 @@ export interface ComponentFormData {
   stockStatus: string;
   tags: string;
   specifications: Record<string, string>;
-  prices: Array<{
-    storeName: string;
-    productUrl: string;
-    currentPrice: number | '';
-    currency: string;
-    availability: string;
-  }>;
+  prices: ComponentPriceFormEntry[];
   images?: FileList | null;
   existingImages?: string[];
 }

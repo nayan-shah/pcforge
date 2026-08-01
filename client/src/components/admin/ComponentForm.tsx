@@ -44,13 +44,19 @@ const labelClass = 'space-y-2 text-sm';
 const labelTextClass = 'font-medium text-slate-700 dark:text-slate-200';
 const errorClass = 'mt-1 text-xs text-rose-500';
 
-const emptyPriceOffer = { storeName: '', productUrl: '', currentPrice: '' as const, currency: 'INR', availability: 'Available' };
+const emptyPriceOffer = { store: '', productUrl: '', price: '' as const, currency: 'INR', inStock: true };
 
 const formDefaults = (component?: ComponentDetail | null): ComponentFormData => ({
   name: component?.name ?? '', brand: component?.brand ?? '', category: component?.category ?? 'CPU',
   description: component?.description ?? '', stockStatus: component?.stockStatus ?? 'In Stock',
   tags: component?.tags?.join(', ') ?? '', specifications: (component?.specifications as Record<string, string>) ?? {},
-  prices: component?.prices?.map(({ storeName, productUrl, currentPrice, currency, availability }) => ({ storeName, productUrl, currentPrice, currency, availability })) ?? [],
+  prices: component?.prices?.map((offer) => ({
+    store: offer.store ?? offer.storeName ?? '',
+    productUrl: offer.productUrl,
+    price: offer.price ?? offer.currentPrice ?? '',
+    inStock: offer.inStock ?? (offer.availability ?? '').toLowerCase() !== 'out of stock',
+    currency: offer.currency ?? 'INR',
+  })) ?? [],
 });
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -240,9 +246,9 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
         </div>
         {priceFields.map((field, index) => (
           <div key={field.id} className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1.6fr_.8fr_.55fr_auto] dark:border-slate-700 dark:bg-slate-900">
-            <input {...register(`prices.${index}.storeName`, { required: true })} className={inputClass} placeholder="Store name" />
+            <input {...register(`prices.${index}.store`, { required: true })} className={inputClass} placeholder="Store name" />
             <input {...register(`prices.${index}.productUrl`, { required: true, pattern: /^https?:\/\/.+/ })} className={inputClass} placeholder="https://store.example/product" />
-            <input type="number" min="0" step="0.01" {...register(`prices.${index}.currentPrice`, { required: true, min: 0, valueAsNumber: true })} className={inputClass} placeholder="Price" />
+            <input type="number" min="0" step="0.01" {...register(`prices.${index}.price`, { required: true, min: 0, valueAsNumber: true })} className={inputClass} placeholder="Price" />
             <input {...register(`prices.${index}.currency`, { required: true, minLength: 3, maxLength: 3 })} className={inputClass} maxLength={3} placeholder="INR" />
             <button type="button" onClick={() => removePrice(index)} className="rounded-xl px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 dark:hover:bg-rose-950/40">Remove</button>
           </div>

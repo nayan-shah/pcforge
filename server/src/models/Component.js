@@ -17,12 +17,16 @@ const urlValidator = {
   message: (props) => `${props.value} is not a valid URL`,
 };
 
-// Price entry schema for store-specific pricing information.
+// Store-specific pricing entry used by the price comparison experience.
 const priceSchema = new Schema(
   {
+    store: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Store name cannot exceed 100 characters'],
+    },
     storeName: {
       type: String,
-      required: [true, 'Store name is required'],
       trim: true,
       maxlength: [100, 'Store name cannot exceed 100 characters'],
     },
@@ -32,9 +36,12 @@ const priceSchema = new Schema(
       trim: true,
       validate: urlValidator,
     },
+    price: {
+      type: Number,
+      min: [0, 'Price must be a non-negative number'],
+    },
     currentPrice: {
       type: Number,
-      required: [true, 'Current price is required'],
       min: [0, 'Price must be a non-negative number'],
     },
     currency: {
@@ -44,6 +51,10 @@ const priceSchema = new Schema(
       uppercase: true,
       minlength: [3, 'Currency must be 3 letters'],
       maxlength: [3, 'Currency must be 3 letters'],
+    },
+    inStock: {
+      type: Boolean,
+      default: true,
     },
     availability: {
       type: String,
@@ -181,6 +192,7 @@ componentSchema.index({ brand: 1, category: 1 });
 componentSchema.index({ rating: -1 });
 componentSchema.index({ createdBy: 1 });
 componentSchema.index({ name: 'text', brand: 'text', tags: 'text' });
+componentSchema.index({ 'prices.price': 1 });
 componentSchema.index({ 'prices.currentPrice': 1 });
 
 const Component = mongoose.model('Component', componentSchema);

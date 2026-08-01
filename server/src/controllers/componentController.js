@@ -8,8 +8,8 @@ const MAX_LIMIT = 100;
 const SORTS = {
   newest: { createdAt: -1, _id: -1 },
   oldest: { createdAt: 1, _id: 1 },
-  priceLowToHigh: { 'prices.currentPrice': 1, _id: 1 },
-  priceHighToLow: { 'prices.currentPrice': -1, _id: 1 },
+  priceLowToHigh: { 'prices.price': 1, 'prices.currentPrice': 1, _id: 1 },
+  priceHighToLow: { 'prices.price': -1, 'prices.currentPrice': -1, _id: 1 },
   rating: { rating: -1, reviewCount: -1, _id: -1 },
 };
 
@@ -65,6 +65,7 @@ export const getAllComponents = async (req, res, next) => {
       if (Number(minPrice) > Number(maxPrice) && minPrice !== undefined && maxPrice !== undefined) throw new ApiError(400, 'minPrice cannot exceed maxPrice.');
       if (minPrice !== undefined) price.$gte = Number(minPrice);
       if (maxPrice !== undefined) price.$lte = Number(maxPrice);
+      filter['prices.price'] = price;
       filter['prices.currentPrice'] = price;
     }
 

@@ -49,8 +49,17 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
     fd.append('specifications', JSON.stringify(data.specifications));
   }
   fd.append('prices', JSON.stringify(data.prices.map((price) => ({
-    ...price,
-    currentPrice: Number(price.currentPrice),
+    store: price.store || price.storeName || '',
+    storeName: price.storeName || price.store || '',
+    productUrl: price.productUrl,
+    price: Number(price.price ?? price.currentPrice ?? 0),
+    currentPrice: Number(price.currentPrice ?? price.price ?? 0),
+    inStock: typeof price.inStock === 'boolean'
+      ? price.inStock
+      : !String(price.availability ?? '').toLowerCase().includes('out of stock'),
+    availability: price.availability || (typeof price.inStock === 'boolean' ? (price.inStock ? 'Available' : 'Out of Stock') : 'Available'),
+    currency: price.currency ?? 'INR',
+    lastUpdated: new Date().toISOString(),
   }))));
 
   // New image files selected by the user
