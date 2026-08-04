@@ -18,6 +18,9 @@ router.get('/:id/related', componentController.getRelatedComponents);
 // Get a single component by ID.
 router.get('/:id', componentController.getComponentById);
 
+// Get all retailer prices for a component ordered by lowest price first.
+router.get('/:id/prices', componentController.getComponentPrices);
+
 // ── Admin-only routes (JWT + admin role required) ────────────────────
 // authMiddleware verifies the JWT and sets req.user.
 // adminMiddleware performs a DB lookup to confirm the user's role is 'admin'.

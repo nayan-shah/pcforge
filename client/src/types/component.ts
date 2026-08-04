@@ -1,13 +1,21 @@
 export interface PriceOffer {
   store?: string;
-  storeName?: string;
+  storeName: string;
   productUrl: string;
-  price?: number;
+  price: number;
   currentPrice?: number;
   currency?: string;
-  inStock?: boolean;
+  inStock: boolean;
   availability?: string;
   lastUpdated?: string;
+}
+
+export interface ComponentPriceComparisonResponse {
+  componentId: string;
+  cheapestPrice: number | null;
+  storeCount: number;
+  availableStoreCount: number;
+  prices: PriceOffer[];
 }
 
 export type ComponentPriceFormEntry = {

@@ -3,6 +3,7 @@ import Component from '../models/Component.js';
 import { deleteCloudinaryImages, getUploadedImageUrls } from '../middleware/uploadMiddleware.js';
 import { ApiError, notFound } from '../utils/apiError.js';
 import { sendSuccess } from '../utils/apiResponse.js';
+import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../services/priceComparisonService.js';
 
 const MAX_LIMIT = 100;
 const SORTS = {
@@ -93,6 +94,29 @@ export const getComponentById = async (req, res, next) => {
     const component = await Component.findById(req.params.id).lean();
     if (!component) throw notFound('Component not found.');
     return sendSuccess(res, 200, 'Component fetched successfully.', component);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const getComponentPrices = async (req, res, next) => {
+  try {
+    if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
+
+    const component = await Component.findById(req.params.id).select('prices').lean();
+    if (!component) throw notFound('Component not found.');
+
+    const sortedPrices = sortPricesLowToHigh(component.prices ?? []);
+    const availablePrices = filterAvailableProducts(sortedPrices);
+    const cheapestPrice = getLowestPrice(sortedPrices);
+
+    return sendSuccess(res, 200, 'Component prices fetched successfully.', {
+      componentId: req.params.id,
+      cheapestPrice,
+      storeCount: sortedPrices.length,
+      availableStoreCount: availablePrices.length,
+      prices: sortedPrices,
+    });
   } catch (error) {
     return next(error);
   }

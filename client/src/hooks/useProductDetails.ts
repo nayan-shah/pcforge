@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getComponentById, getRelatedComponents } from '../api/componentApi';
-import type { ComponentDetail } from '../types/component';
+import { getComponentById, getComponentPrices, getRelatedComponents } from '../api/componentApi';
+import type { ComponentDetail, ComponentPriceComparisonResponse } from '../types/component';
 
 /**
  * Fetches a product detail response and its related products for a single component ID.
@@ -10,6 +10,7 @@ import type { ComponentDetail } from '../types/component';
  */
 export default function useProductDetails(productId: string) {
   const [data, setData] = useState<ComponentDetail | null>(null);
+  const [comparison, setComparison] = useState<ComponentPriceComparisonResponse | null>(null);
   const [related, setRelated] = useState<ComponentDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +20,7 @@ export default function useProductDetails(productId: string) {
 
     if (!productId) {
       setData(null);
+      setComparison(null);
       setRelated([]);
       setError('A valid product ID is required.');
       setIsLoading(false);
@@ -32,16 +34,19 @@ export default function useProductDetails(productId: string) {
 
     Promise.all([
       getComponentById(productId),
+      getComponentPrices(productId),
       getRelatedComponents(productId),
     ])
-      .then(([component, relatedProducts]) => {
+      .then(([component, prices, relatedProducts]) => {
         if (!active) return;
         setData(component);
+        setComparison(prices);
         setRelated(relatedProducts);
       })
       .catch((requestError: unknown) => {
         if (!active) return;
         setData(null);
+        setComparison(null);
         setRelated([]);
         setError(requestError instanceof Error ? requestError.message : 'Unable to load product details.');
       })
@@ -54,5 +59,5 @@ export default function useProductDetails(productId: string) {
     };
   }, [productId]);
 
-  return { data, related, isLoading, error };
+  return { data, comparison, related, isLoading, error };
 }

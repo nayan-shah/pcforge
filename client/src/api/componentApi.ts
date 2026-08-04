@@ -3,6 +3,7 @@ import type {
   ApiResponse,
   ComponentDetail,
   ComponentFormData,
+  ComponentPriceComparisonResponse,
   ComponentQueryParams,
   ComponentsResponse,
 } from '../types/component';
@@ -16,8 +17,6 @@ import type {
  * All mutating requests (POST, PUT) use FormData so that image File objects
  * can be included in the same request as JSON-compatible fields.
  */
-
-// ── Helpers ──────────────────────────────────────────────────────────
 
 /**
  * Converts the typed form data into a FormData object suitable for
@@ -89,7 +88,7 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   return fd;
 }
 
-// ── API Functions ────────────────────────────────────────────────────
+// ── API Functions 
 
 /**
  * Fetch a paginated, filtered, sorted list of components.
@@ -119,6 +118,15 @@ export async function getComponentById(
 /**
  * Fetch related components for a selected product.
  */
+export async function getComponentPrices(
+  id: string,
+): Promise<ComponentPriceComparisonResponse> {
+  const response = await apiClient.get<ApiResponse<ComponentPriceComparisonResponse>>(
+    `/components/${id}/prices`,
+  );
+  return response.data.data;
+}
+
 export async function getRelatedComponents(
   id: string,
 ): Promise<ComponentDetail[]> {

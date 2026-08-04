@@ -1,15 +1,12 @@
 import multer from 'multer';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import createCloudinaryStorage from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary.js';
 import { ApiError } from '../utils/apiError.js';
 
-const storage = new CloudinaryStorage({
+const storage = createCloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'pcforge/components',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    resource_type: 'image',
-  },
+  folder: 'pcforge/components',
+  allowedFormats: ['jpg', 'jpeg', 'png', 'webp'],
 });
 
 const upload = multer({

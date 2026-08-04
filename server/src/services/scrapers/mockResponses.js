@@ -1,0 +1,38 @@
+export const mockRetailerResponses = {
+  amazon: {
+    title: 'AMD Ryzen 9 7950X',
+    price: '54999',
+    currency: 'INR',
+    url: 'https://www.amazon.in/amd-ryzen-9-7950x',
+    image: 'https://images.example.com/amazon/cpu.jpg',
+    availability: 'In Stock',
+    updatedAt: '2026-08-04T10:30:00.000Z',
+  },
+  mdcomputers: {
+    name: 'AMD Ryzen 9 7950X',
+    currentPrice: 54999,
+    currency: 'INR',
+    productUrl: 'https://www.mdcomputers.in/amd-ryzen-9-7950x',
+    imageUrl: 'https://images.example.com/mdcomputers/cpu.jpg',
+    stockStatus: 'Available',
+    fetchedAt: '2026-08-04T10:31:00.000Z',
+  },
+  primeabgb: {
+    product_name: 'AMD Ryzen 9 7950X',
+    sale_price: 56999,
+    currency_code: 'INR',
+    link: 'https://primeabgb.com/products/amd-ryzen-9-7950x',
+    image_url: 'https://images.example.com/primeabgb/cpu.jpg',
+    stock: 'In Stock',
+    last_update: '2026-08-04T10:32:00.000Z',
+  },
+  vedant: {
+    name: 'AMD Ryzen 9 7950X',
+    price: 57999,
+    currency: 'INR',
+    url: 'https://www.vedantcomputers.com/amd-ryzen-9-7950x',
+    image: 'https://images.example.com/vedant/cpu.jpg',
+    itemStatus: 'In Stock',
+    updated: '2026-08-04T10:33:00.000Z',
+  },
+};

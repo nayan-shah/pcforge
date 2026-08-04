@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { HiOutlineArrowPath, HiOutlineExclamationCircle } from 'react-icons/hi2';
 import ProductGallery from '../components/catalog/ProductGallery';
 import ProductInfo from '../components/catalog/ProductInfo';
+import PriceComparisonTable from '../components/catalog/PriceComparisonTable';
 import SpecificationsTable from '../components/catalog/SpecificationsTable';
 import RelatedProducts from '../components/catalog/RelatedProducts';
 import EmptyState from '../components/common/EmptyState';
@@ -16,7 +17,7 @@ import useProductDetails from '../hooks/useProductDetails';
  */
 export default function ProductDetails() {
   const { id } = useParams();
-  const { data, related, isLoading, error } = useProductDetails(id ?? '');
+  const { data, comparison, related, isLoading, error } = useProductDetails(id ?? '');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   if (isLoading) {
@@ -83,6 +84,7 @@ export default function ProductDetails() {
 
         <div className="space-y-6">
           <ProductInfo component={data} />
+          <PriceComparisonTable comparison={comparison} />
           <RelatedProducts products={related} />
         </div>
       </div>
