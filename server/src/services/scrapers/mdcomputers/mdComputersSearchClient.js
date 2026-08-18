@@ -1,71 +1,95 @@
-import { create } from 'axios';
-
-const BASE_URL = 'https://www.mdcomputers.in';
-const SEARCH_PATH = '/catalogsearch/result/';
-const MAX_ATTEMPTS = 3;
-
-const client = create({
-  baseURL: BASE_URL,
-  timeout: 20_000,
-  headers: {
-    'User-Agent': 'PCForge price comparison bot (+https://pcforge.local)',
-    Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'en-IN,en;q=0.9',
-  },
-  validateStatus: () => true,
-});
-
-const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
-
-export const buildSearchUrl = (query) => `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(query)}`;
-
-const isRetryableStatus = (status) => status === 429 || status >= 500;
+import { chromium } from "playwright";
 
 /**
- * Retrieves the MDComputers search document only. HTML parsing deliberately
- * lives in mdComputersParser.js so markup changes do not affect HTTP handling.
+ * Uses a headless Chromium browser to fetch MDComputers search results,
+ * bypassing the 403 block that axios receives.
+ *
+ * Falls back gracefully — returns null on any failure so the
+ * calling service can handle it without crashing the orchestrator.
  */
+
+const BASE_URL = "https://www.mdcomputers.in";
+const SEARCH_PATH = "/catalogsearch/result/";
+const TIMEOUT_MS = 30_000;
+
 export async function fetchMdComputersSearchHtml(query) {
-  const searchQuery = String(query ?? '').trim();
-  if (!searchQuery) {
-    throw new Error('A valid search query is required.');
-  }
+  const searchQuery = String(query ?? "").trim();
+  if (!searchQuery) throw new Error("A valid search query is required.");
 
-  const url = buildSearchUrl(searchQuery);
+  let browser = null;
+  try {
+    browser = await chromium.launch({
+      headless: true,
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-dev-shm-usage",
+      ],
+    });
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-    try {
-      const response = await client.get(SEARCH_PATH, { params: { q: searchQuery } });
+    const context = await browser.newContext({
+      userAgent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      viewport: { width: 1280, height: 800 },
+      locale: "en-IN",
+      extraHTTPHeaders: {
+        "Accept-Language": "en-IN,en;q=0.9",
+        "Accept-Encoding": "gzip, deflate, br",
+      },
+    });
 
-      if (response.status >= 200 && response.status < 300) {
-        return String(response.data ?? '');
-      }
+    // Remove Playwright fingerprints that websites use to detect headless mode
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+    });
 
-      const retryable = isRetryableStatus(response.status);
-      const retryAfterSeconds = Number(response.headers['retry-after']);
-      const retryDelay = Number.isFinite(retryAfterSeconds)
-        ? retryAfterSeconds * 1_000
-        : 500 * (2 ** (attempt - 1));
+    const page = await context.newPage();
+    const url = `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(searchQuery)}`;
 
-      if (response.status === 429) {
-        console.warn('[MDComputers Request] Rate limited.', { url, attempt, retryAfterSeconds });
-      } else {
-        console.error('[MDComputers Request] Unexpected HTTP status.', { url, status: response.status, attempt });
-      }
+    console.info("[MDComputers Playwright] Navigating.", { url });
+    const response = await page.goto(url, {
+      waitUntil: 'networkidle',
+      timeout: TIMEOUT_MS,
+    });
 
-      if (!retryable || attempt === MAX_ATTEMPTS) return null;
-      await delay(retryDelay);
-    } catch (error) {
-      console.error('[MDComputers Request] Network request failed.', {
+    if (!response || response.status() >= 400) {
+      console.error('[MDComputers Playwright] Bad HTTP response.', {
+        status: response?.status(),
         url,
-        attempt,
-        message: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+
+    // Extra wait for JS-rendered product grid
+    await page.waitForTimeout(2000);
+
+    // Wait for the custom theme product cards
+    await page
+      .waitForSelector('.product-grid-item, .product-entities-title', {
+        timeout: 10_000,
+      })
+      .catch(() => {
+        console.warn('[MDComputers Playwright] Product grid selector timed out — returning available HTML.');
       });
 
-      if (attempt === MAX_ATTEMPTS) return null;
-      await delay(500 * (2 ** (attempt - 1)));
-    }
+    const html = await page.content();
+    console.info("[MDComputers Playwright] HTML fetched successfully.", {
+      query: searchQuery,
+      htmlLength: html.length,
+    });
+    return html;
+  } catch (error) {
+    console.error("[MDComputers Playwright] Failed.", {
+      query: searchQuery,
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  } finally {
+    if (browser) await browser.close().catch(() => {});
   }
-
-  return null;
 }
+
+export const buildSearchUrl = (query) =>
+  `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(query)}`;

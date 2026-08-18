@@ -1,11 +1,13 @@
 import { scrapeMdComputersOffers } from './scrapers/mdcomputers/mdComputersService.js';
 import { scrapePrimeAbgbOffers } from './scrapers/primeabgb/primeAbgbService.js';
 import { scrapeVedantOffers } from './scrapers/vedant/vedantService.js';
+import { scrapePcStudioOffers } from './scrapers/pcstudio/pcStudioService.js';
 
 const RETAILERS = [
   { name: 'MDComputers', scrape: scrapeMdComputersOffers },
-  { name: 'PrimeABGB', scrape: scrapePrimeAbgbOffers },
-  { name: 'Vedant', scrape: scrapeVedantOffers },
+  { name: 'PrimeABGB',   scrape: scrapePrimeAbgbOffers },
+  { name: 'Vedant',      scrape: scrapeVedantOffers },
+  { name: 'PCStudio',    scrape: scrapePcStudioOffers },
 ];
 
 const KNOWN_BRANDS = ['amd', 'asus', 'cooler master', 'corsair', 'deepcool', 'gigabyte', 'intel', 'kingston', 'msi', 'nvidia', 'sapphire', 'zotac'];
@@ -65,7 +67,28 @@ export async function searchRetailers(query) {
     else console.error('[Search Orchestrator] Scraper failed.', { retailer: RETAILERS[index].name, message: result.reason instanceof Error ? result.reason.message : String(result.reason) });
   });
 
-  const offers = sortOffers(deduplicateOffers(successful));
+  // ── Relevance filter ────────────────────────────────────────────────
+  // Some retailers (notably MDComputers) return their full catalog when there
+  // is no exact product match.  We keep only offers whose name shares at
+  // least one numeric token (model number / part number) with the query.
+  // Fall back to any token overlap when the query has no numeric tokens.
+  const queryTokens = tokenize(searchQuery);
+  const queryNums   = queryTokens.filter((t) => /\d/.test(t));
+  const isRelevant  = (offer) => {
+    const nameTokens = new Set(tokenize(offer.productName));
+    const matchSet   = queryNums.length ? queryNums : queryTokens;
+    return matchSet.some((t) => nameTokens.has(t));
+  };
+  const relevant = successful.filter(isRelevant);
+
+  if (relevant.length < successful.length) {
+    console.info('[Search Orchestrator] Relevance filter removed irrelevant offers.', {
+      before: successful.length,
+      after:  relevant.length,
+    });
+  }
+
+  const offers = sortOffers(deduplicateOffers(relevant));
   console.info('[Search Orchestrator] Search completed.', { query: searchQuery, durationMs: Date.now() - startedAt, totalOffers: offers.length });
   return {
     query: searchQuery,

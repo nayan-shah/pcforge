@@ -22,12 +22,21 @@ export function parsePrimeAbgbSearchHtml(html) {
       const productName = text(card.find('.woocommerce-loop-product__title, .name, h2, h3').first().text()) || text(link.attr('title'));
       const productUrl = absoluteUrl(link.attr('href'));
       const image = card.find('img').first();
-      const stock = text(card.find('.stock, .availability').first().text()) || 'Unknown';
+      const stockEl = card.find('.stock, .availability').first();
+      let stock = 'In Stock';
+      if (stockEl.hasClass('out-of-stock') || /out.of.stock|unavailable|sold.out/i.test(stockEl.text())) {
+        stock = 'Out of Stock';
+      } else if (stockEl.hasClass('in-stock') || /in.stock|available/i.test(stockEl.text())) {
+        stock = 'In Stock';
+      }
       if (!productName || !productUrl) return;
 
       products.push({
         product_name: productName,
-        sale_price: price(card.find('ins .woocommerce-Price-amount, .price .woocommerce-Price-amount, .price').first().text()),
+        sale_price: price(
+          card.find('ins .woocommerce-Price-amount').first().text()
+          || card.find('.woocommerce-Price-amount').first().text()
+        ),
         currency_code: 'INR',
         link: productUrl,
         image_url: absoluteUrl(image.attr('src') || image.attr('data-src') || image.attr('data-lazy-src')),

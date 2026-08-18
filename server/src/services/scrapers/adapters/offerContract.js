@@ -12,7 +12,7 @@ export const REQUIRED_OFFER_FIELDS = [
 export const normalizeOfferShape = (raw = {}) => ({
   storeName: String(raw.storeName ?? '').trim(),
   productName: String(raw.productName ?? '').trim(),
-  price: Number(raw.price ?? 0),
+  price: raw.price != null && Number(raw.price) > 0 ? Number(raw.price) : null,
   currency: String(raw.currency ?? 'INR').trim().toUpperCase(),
   productUrl: String(raw.productUrl ?? '').trim(),
   image: String(raw.image ?? '').trim(),
@@ -35,8 +35,8 @@ export const validateOffer = (offer, storeName) => {
     return { isValid: false, missingFields };
   }
 
-  if (Number.isNaN(Number(offer.price)) || Number(offer.price) < 0) {
-    logInvalidOffer(storeName, 'Price must be a non-negative number.', offer);
+  if (offer.price == null || Number.isNaN(Number(offer.price)) || Number(offer.price) <= 0) {
+    logInvalidOffer(storeName, 'Price must be a positive number.', offer);
     return { isValid: false, missingFields: ['price'] };
   }
 
