@@ -104,6 +104,20 @@ export async function getComponents(
 }
 
 /**
+ * Fetch randomly sampled components for the home page featured section.
+ * Returns components that have images and prices where possible.
+ */
+export async function getFeaturedComponents(
+  limit = 12,
+): Promise<ComponentDetail[]> {
+  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>(
+    '/components/featured',
+    { params: { limit } },
+  );
+  return response.data.data;
+}
+
+/**
  * Fetch a single component by its Mongo ObjectId.
  */
 export async function getComponentById(

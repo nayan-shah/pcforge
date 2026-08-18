@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { HiSearch, HiMenu, HiChevronDown, HiLogout, HiUser } from 'react-icons/hi';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,6 +13,16 @@ const links = [
 export default function Navbar() {
   const { isAuthenticated, user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
+
+  const handleSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+    navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+    setSearchQuery('');
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
@@ -43,17 +53,20 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* Center: Flipkart-style Prominent Search Bar */}
-        <div className="flex-1 max-w-md hidden sm:block">
+        {/* Center: Prominent Search Bar */}
+        <form onSubmit={handleSearchSubmit} className="flex-1 max-w-md hidden sm:block">
           <div className="relative flex items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-slate-800 focus-within:bg-white focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-500/10 transition shadow-inner">
             <HiSearch className="h-5 w-5 text-slate-400 mr-2 flex-shrink-0" />
             <input
-              type="text"
+              id="navbar-search"
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search components (e.g. RTX 4090, Ryzen 9...)"
               className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800"
             />
           </div>
-        </div>
+        </form>
 
         {/* Right: Auth and Mobile Toggle */}
         <div className="flex items-center gap-4">

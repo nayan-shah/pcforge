@@ -16,6 +16,7 @@ import AdminLanding from './pages/admin/AdminLanding';
 import DashboardHome from './pages/admin/DashboardHome';
 import Components from './pages/admin/Components';
 import ComponentsPage from './pages/ComponentsPage';
+import SearchResults from './pages/SearchResults';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="admin/home" element={<AdminRoute><DashboardHome /></AdminRoute>} />
         <Route path="admin/components" element={<AdminRoute><Components /></AdminRoute>} />
         <Route path="components" element={<ComponentsPage />} />
+        <Route path="search" element={<SearchResults />} />
       </Route>
     </Routes>
   );

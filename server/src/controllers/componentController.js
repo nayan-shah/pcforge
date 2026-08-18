@@ -45,6 +45,35 @@ export const createComponent = async (req, res, next) => {
   }
 };
 
+export const getFeaturedComponents = async (req, res, next) => {
+  try {
+    const limit = Math.min(Math.max(1, Number(req.query.limit) || 12), 24);
+
+    // Try to get components that have both images and prices (best for the home page)
+    let components = await Component.aggregate([
+      { $match: { 'images.0': { $exists: true }, 'prices.0': { $exists: true } } },
+      { $sample: { size: limit } },
+    ]);
+
+    // Fallback: any components with images
+    if (components.length < limit) {
+      components = await Component.aggregate([
+        { $match: { 'images.0': { $exists: true } } },
+        { $sample: { size: limit } },
+      ]);
+    }
+
+    // Final fallback: any components at all
+    if (components.length === 0) {
+      components = await Component.aggregate([{ $sample: { size: limit } }]);
+    }
+
+    return sendSuccess(res, 200, 'Featured components fetched successfully.', components);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export const getAllComponents = async (req, res, next) => {
   try {
     const page = parsePositiveInteger(req.query.page, 1);

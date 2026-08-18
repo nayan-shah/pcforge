@@ -100,3 +100,25 @@ export interface Toast {
   message: string;
 }
 
+// ── Live retailer search types (GET /api/search?query=...) ─────────────────
+
+/** A single scraped offer returned by the search orchestrator. */
+export interface RetailerOffer {
+  storeName: string;
+  productName: string;
+  price: number;
+  currency: string;
+  productUrl: string;
+  image: string;
+  availability: string;
+  lastUpdated: string;
+}
+
+/** Shape returned by GET /api/search?query=... */
+export interface RetailerSearchResponse {
+  query: string;
+  totalStores: number;
+  totalOffers: number;
+  cheapestOffer: RetailerOffer | null;
+  offers: RetailerOffer[];
+}

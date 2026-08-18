@@ -9,6 +9,9 @@ const router = express.Router();
 // ── Public routes (no auth required) ────────────────────────────────
 // Any user can browse and view components (used by catalog, builder, etc.)
 
+// Get randomly sampled featured components for the home page.
+router.get('/featured', componentController.getFeaturedComponents);
+
 // Get all components (paginated, filterable, sortable)
 router.get('/', componentController.getAllComponents);
 
