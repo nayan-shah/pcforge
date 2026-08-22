@@ -21,14 +21,14 @@ const formatPrice = (price: number, currency = 'INR') =>
   }).format(price);
 
 const formatDate = (iso?: string) => {
-  if (!iso) return '—';
+  if (!iso) return 'ï¿½';
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return 'ï¿½';
   return new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
 };
 
-const isAvailable = (availability: string) =>
-  !/out of stock|unavailable|sold out/i.test(availability);
+const isAvailable = (availability?: string) =>
+  !availability || !/out of stock|unavailable|sold out/i.test(availability);
 
 /* -- Retailer logo colours --------------------------------------- */
 const STORE_COLORS: Record<string, string> = {
@@ -175,10 +175,43 @@ function ScrapingStatus() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-500" />
           </span>
-          Scraping {name}…
+          Scraping {name}ï¿½
         </span>
       ))}
     </div>
+  );
+}
+
+interface SearchFiltersProps {
+  inStockOnly: boolean;
+  excludedStores: string[];
+  stores: string[];
+  onInStockChange: (value: boolean) => void;
+  onStoreToggle: (store: string, included: boolean) => void;
+  onClear: () => void;
+}
+
+function SearchFilters({ inStockOnly, excludedStores, stores, onInStockChange, onStoreToggle, onClear }: SearchFiltersProps) {
+  return (
+    <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
+          <p className="mt-1 text-sm text-slate-500">Refine price offers.</p>
+        </div>
+        {(inStockOnly || excludedStores.length > 0) && <button type="button" onClick={onClear} className="text-sm font-semibold text-violet-600 hover:text-violet-500">Clear</button>}
+      </div>
+      <div className="space-y-5 pt-5">
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50">
+          <input type="checkbox" checked={inStockOnly} onChange={(event) => onInStockChange(event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
+          In stock only
+        </label>
+        <fieldset>
+          <legend className="mb-3 text-sm font-semibold text-slate-900">Retailers</legend>
+          {stores.length ? <div className="space-y-2">{stores.map((store) => <label key={store} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600"><input type="checkbox" checked={!excludedStores.includes(store)} onChange={(event) => onStoreToggle(store, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />{store}</label>)}</div> : <p className="text-sm text-slate-500">Retailers will appear once offers load.</p>}
+        </fieldset>
+      </div>
+    </aside>
   );
 }
 
@@ -189,6 +222,10 @@ export default function SearchResults() {
   const [inputValue, setInputValue] = useState(queryParam);
   const { data, isLoading, error, retry } = useRetailerSearch(queryParam);
 
+  // Filters state
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [excludedStores, setExcludedStores] = useState<string[]>([]);
+
   // Keep input in sync when URL changes (e.g. back/forward)
   useEffect(() => { setInputValue(queryParam); }, [queryParam]);
 
@@ -198,6 +235,14 @@ export default function SearchResults() {
     if (!trimmed) return;
     setSearchParams({ q: trimmed }, { replace: false });
   };
+
+  const availableStores = data ? Array.from(new Set(data.offers.map(o => o.storeName))) : [];
+  
+  const filteredOffers = data?.offers.filter(offer => {
+    if (inStockOnly && !isAvailable(offer.availability)) return false;
+    if (excludedStores.includes(offer.storeName)) return false;
+    return true;
+  }) ?? [];
 
   const cheapestOffer = data?.cheapestOffer ?? null;
 
@@ -223,7 +268,7 @@ export default function SearchResults() {
               type="search"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="e.g. RTX 5070, Ryzen 9 9950X, DDR5 32GB…"
+              placeholder="e.g. RTX 5070, Ryzen 9 9950X, DDR5 32GBï¿½"
               className="w-full bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
             />
           </div>
@@ -255,15 +300,17 @@ export default function SearchResults() {
 
       {/* -- Loading state -- */}
       {isLoading && (
-        <div className="space-y-6">
-          <ScrapingStatus />
-          <LoadingSkeleton />
+        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+          <SearchFilters inStockOnly={inStockOnly} excludedStores={excludedStores} stores={[]} onInStockChange={setInStockOnly} onStoreToggle={() => undefined} onClear={() => { setInStockOnly(false); setExcludedStores([]); }} />
+          <div className="space-y-6"><ScrapingStatus /><LoadingSkeleton /></div>
         </div>
       )}
 
       {/* -- Error state -- */}
       {!isLoading && error && (
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center">
+        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+          <SearchFilters inStockOnly={inStockOnly} excludedStores={excludedStores} stores={[]} onInStockChange={setInStockOnly} onStoreToggle={() => undefined} onClear={() => { setInStockOnly(false); setExcludedStores([]); }} />
+          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center">
           <HiOutlineExclamationCircle className="mx-auto h-11 w-11 text-rose-400" />
           <h2 className="mt-4 text-lg font-semibold text-rose-800">Could not fetch prices</h2>
           <p className="mt-2 text-sm text-rose-600">{error}</p>
@@ -275,19 +322,82 @@ export default function SearchResults() {
             <HiOutlineArrowPath className="h-4 w-4" />
             Retry
           </button>
+          </div>
         </div>
       )}
 
       {/* -- Results -- */}
       {!isLoading && !error && data && (
-        <div className="space-y-6">
-          {/* Summary bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
+          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
+                <p className="mt-1 text-sm text-slate-500">Refine price offers.</p>
+              </div>
+              {(inStockOnly || excludedStores.length > 0) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInStockOnly(false);
+                    setExcludedStores([]);
+                  }}
+                  className="text-sm font-semibold text-violet-600 transition hover:text-violet-500"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <div className="space-y-5 pt-5">
+              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50">
+                  <input
+                    type="checkbox"
+                    id="inStockOnly"
+                    checked={inStockOnly}
+                    onChange={(e) => setInStockOnly(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  In stock only
+              </label>
+              {availableStores.length > 0 && (
+                <fieldset>
+                  <legend className="mb-3 text-sm font-semibold text-slate-900">Retailers</legend>
+                  <div className="space-y-2">
+                    {availableStores.map((store) => (
+                      <label key={store} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={!excludedStores.includes(store)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setExcludedStores(prev => prev.filter(s => s !== store));
+                            } else {
+                              setExcludedStores(prev => [...prev, store]);
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                        />
+                        {store}
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
+            </div>
+          </aside>
+
+          <div className="space-y-6">
+            {/* Summary bar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
             <div>
               <p className="text-sm font-semibold text-slate-900">
-                {data.totalOffers} offer{data.totalOffers !== 1 ? 's' : ''} across{' '}
-                {data.totalStores} store{data.totalStores !== 1 ? 's' : ''} for{' '}
+                {filteredOffers.length} offer{filteredOffers.length !== 1 ? 's' : ''} for{' '}
                 <span className="text-violet-600">&ldquo;{data.query}&rdquo;</span>
+                {filteredOffers.length !== data.totalOffers && (
+                  <span className="ml-2 text-slate-500 font-normal">
+                    (filtered from {data.totalOffers})
+                  </span>
+                )}
               </p>
             </div>
             {cheapestOffer && (
@@ -302,36 +412,36 @@ export default function SearchResults() {
                 </span>
               </div>
             )}
-          </div>
+            </div>
 
-          {/* No results */}
-          {data.offers.length === 0 && (
+            {/* No results */}
+            {filteredOffers.length === 0 && (
             <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-14 text-center">
               <HiOutlineMagnifyingGlass className="mx-auto h-10 w-10 text-slate-300" />
               <h2 className="mt-4 text-lg font-semibold text-slate-700">No results found</h2>
               <p className="mt-2 text-sm text-slate-500">
-                Try a broader search term, e.g. just the model number.
+                Try a broader search term, or adjust your filters.
               </p>
             </div>
-          )}
+            )}
 
-          {/* Offer cards */}
-          <div className="space-y-4">
-            {data.offers.map((offer, index) => (
-              <OfferCard
-                key={`${offer.storeName}-${offer.productUrl}-${index}`}
-                offer={offer}
-                isCheapest={
-                  cheapestOffer?.storeName === offer.storeName &&
-                  cheapestOffer?.productUrl === offer.productUrl
-                }
-                rank={index + 1}
-              />
-            ))}
-          </div>
+            {/* Offer cards */}
+            <div className="space-y-4">
+              {filteredOffers.map((offer, index) => (
+                <OfferCard
+                  key={`${offer.storeName}-${offer.productUrl}-${index}`}
+                  offer={offer}
+                  isCheapest={
+                    cheapestOffer?.storeName === offer.storeName &&
+                    cheapestOffer?.productUrl === offer.productUrl
+                  }
+                  rank={index + 1}
+                />
+              ))}
+            </div>
 
-          {/* Browse catalog link */}
-          <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-center">
+            {/* Browse catalog link */}
+            <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-center">
             <p className="text-sm text-slate-700">
               Looking to browse all components?{' '}
               <Link
@@ -341,6 +451,7 @@ export default function SearchResults() {
                 Open the catalog ?
               </Link>
             </p>
+            </div>
           </div>
         </div>
       )}

@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { HiCheckCircle, HiChevronRight } from 'react-icons/hi2';
 import { createBuild } from '../api/buildApi';
 import { getComponents } from '../api/componentApi';
 import { useAuth } from '../context/AuthContext';
 import { useBuilder } from '../context/BuilderContext';
 import type { BuildStep, BuilderOption, ComponentCategory, SelectedComponent } from '../types/builder';
 import type { ComponentDetail } from '../types/component';
-import BuildStepper from '../components/builder/BuildStepper';
 import ComponentSelector from '../components/builder/ComponentSelector';
-import SelectedComponentCard from '../components/builder/SelectedComponentCard';
 import BuildSummary from '../components/builder/BuildSummary';
-import CompatibilityStatus from '../components/builder/CompatibilityStatus';
-import EstimatedPower from '../components/builder/EstimatedPower';
 
 const buildSteps: BuildStep[] = [
   { category: 'CPU', title: 'Choose your processor', description: 'Fast compute for gaming and productivity' },
@@ -202,77 +199,69 @@ export default function PCBuilderPage() {
     alert('Ask AI is a UI-only feature.');
   }
 
+  const completedCategories = useMemo(() => {
+    return {
+      CPU: !!selections.cpu,
+      GPU: !!selections.gpu,
+      RAM: !!selections.ram,
+      Motherboard: !!selections.motherboard,
+      PSU: !!selections.psu,
+      Storage: !!selections.storage,
+      Case: !!selections.case,
+      Cooler: !!selections.cooler,
+    };
+  }, [selections]);
+
   return (
-    <section className="space-y-8">
-      <div className="grid gap-8 lg:grid-cols-[360px_1fr]">
-        <BuildStepper steps={buildSteps} activeIndex={activeStepIndex} onSelectStep={handleSelectStep} />
-
+    <section className="space-y-8 -ml-4 sm:-ml-8 lg:-ml-16 xl:-ml-32">
+      <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Step {activeStepIndex + 1}</p>
-            <h1 className="mt-3 text-3xl font-semibold text-slate-900">Build your custom PC</h1>
-            <p className="mt-4 text-slate-600">Select components step by step. Live pricing, power estimates, and compatibility checks update automatically.</p>
-          </div>
-
-          <ComponentSelector
-            category={activeCategory}
-            options={availableOptions}
-            selectedId={selectedOption?.id ?? null}
-            loading={loading || isLoadingOptions}
-            onSelect={handleSelectOption}
-          />
-
-          <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-            <div className="space-y-6">
-              <BuildSummary selectedComponents={selectedComponents} onSaveBuild={handleSaveBuild} onAskAI={handleAskAI} />
-              <CompatibilityStatus selectedComponents={selectedComponents} />
+          <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 dark:border-slate-700 dark:bg-slate-900">
+            <div className="border-b border-slate-100 pb-4 dark:border-slate-800">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">PC Builder</p>
+              <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">Required components</h2>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">Choose every core part for a complete PC.</p>
             </div>
-            <EstimatedPower selectedComponents={selectedComponents} />
-          </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-            <button
-              type="button"
-              onClick={goToPreviousStep}
-              disabled={activeStepIndex === 0}
-              className="inline-flex items-center justify-center rounded-3xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              onClick={goToNextStep}
-              disabled={activeStepIndex === buildSteps.length - 1}
-              className="inline-flex items-center justify-center rounded-3xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+            <div className="mt-4 space-y-1">
+              {buildSteps.map((step, index) => {
+                const isSelected = completedCategories[step.category];
+                const isActive = index === activeStepIndex;
+
+                return (
+                  <button
+                    key={step.category}
+                    type="button"
+                    onClick={() => handleSelectStep(index)}
+                    className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
+                      isActive
+                        ? 'bg-violet-50 text-violet-900 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-100 dark:ring-violet-800'
+                        : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {isSelected ? (
+                      <HiCheckCircle className="h-5 w-5 shrink-0 text-emerald-500" aria-label="Selected" />
+                    ) : (
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${isActive ? 'border-violet-500 text-violet-600' : 'border-slate-300 text-slate-400 dark:border-slate-600'}`}>
+                        {index + 1}
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold">{step.category}</span>
+                      <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                        {isSelected ? 'Component selected' : 'Required'}
+                      </span>
+                    </span>
+                    <HiChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
         </div>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Components selected</h2>
-            <p className="mt-2 text-slate-600">Review your current choices before saving your build.</p>
-            <div className="mt-6 grid gap-4">
-              {selectedComponents.map((component) => (
-                <SelectedComponentCard key={component.category} component={component} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-xl font-semibold text-slate-900">Build details</h2>
-            <div className="mt-5 space-y-3 text-slate-600">
-              <p>Work through each step to create a complete, compatible PC build.</p>
-              <p>Selected parts are now backed by live catalog data from the API.</p>
-              <p>Current estimated totals: ₹{totalPrice.toFixed(2)} · {totalPower}W</p>
-            </div>
-          </div>
+          {/* Main content */}
         </div>
       </div>
     </section>

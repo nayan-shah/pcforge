@@ -78,6 +78,10 @@ export default function ComponentsPage() {
           brand={brandInput}
           onCategoryChange={(value) => updateParams({ category: value })}
           onBrandChange={setBrandInput}
+          onClear={() => {
+            setBrandInput('');
+            updateParams({ category: '', brand: '' });
+          }}
         />
 
         <div className="space-y-6">
