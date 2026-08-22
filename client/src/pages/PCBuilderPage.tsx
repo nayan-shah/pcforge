@@ -213,7 +213,7 @@ export default function PCBuilderPage() {
   }, [selections]);
 
   return (
-    <section className="space-y-8 -ml-4 sm:-ml-8 lg:-ml-16 xl:-ml-32">
+    <section className="space-y-8">
       <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
         <div className="space-y-6">
           <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 dark:border-slate-700 dark:bg-slate-900">
@@ -261,7 +261,18 @@ export default function PCBuilderPage() {
         </div>
         
         <div className="space-y-6">
-          {/* Main content */}
+          <ComponentSelector
+            category={activeCategory}
+            options={availableOptions}
+            selectedId={selectedOption?.id ?? null}
+            loading={isLoadingOptions}
+            onSelect={handleSelectOption}
+          />
+          <BuildSummary
+            selectedComponents={selectedComponents}
+            onSaveBuild={handleSaveBuild}
+            onAskAI={handleAskAI}
+          />
         </div>
       </div>
     </section>

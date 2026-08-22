@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   HiOutlineArrowPath,
@@ -29,6 +29,21 @@ const formatDate = (iso?: string) => {
 
 const isAvailable = (availability?: string) =>
   !availability || !/out of stock|unavailable|sold out/i.test(availability);
+
+const COMPONENT_BRANDS = [
+  'AMD', 'NVIDIA', 'Intel', 'ASUS', 'MSI', 'Gigabyte', 'Zotac', 'Sapphire',
+  'Palit', 'Corsair', 'Kingston', 'Samsung', 'Crucial', 'Western Digital',
+  'Cooler Master', 'DeepCool', 'Noctua', 'Lian Li',
+];
+
+const getComponentBrand = (productName: string) => {
+  const name = productName.toLowerCase();
+  const directBrand = COMPONENT_BRANDS.find((brand) => name.includes(brand.toLowerCase()));
+  if (directBrand) return directBrand;
+  if (/geforce|rtx|gtx/.test(name)) return 'NVIDIA';
+  if (/radeon|ryzen/.test(name)) return 'AMD';
+  return 'Other';
+};
 
 /* -- Retailer logo colours --------------------------------------- */
 const STORE_COLORS: Record<string, string> = {
@@ -183,31 +198,48 @@ function ScrapingStatus() {
 }
 
 interface SearchFiltersProps {
-  inStockOnly: boolean;
   excludedStores: string[];
   stores: string[];
-  onInStockChange: (value: boolean) => void;
+  componentBrand: string;
+  brands: string[];
+  minPrice: string;
+  maxPrice: string;
   onStoreToggle: (store: string, included: boolean) => void;
+  onBrandChange: (brand: string) => void;
+  onMinPriceChange: (price: string) => void;
+  onMaxPriceChange: (price: string) => void;
   onClear: () => void;
 }
 
-function SearchFilters({ inStockOnly, excludedStores, stores, onInStockChange, onStoreToggle, onClear }: SearchFiltersProps) {
+function SearchFilters({ excludedStores, stores, componentBrand, brands, minPrice, maxPrice, onStoreToggle, onBrandChange, onMinPriceChange, onMaxPriceChange, onClear }: SearchFiltersProps) {
   return (
-    <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+    <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:sticky md:top-6">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div>
           <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
           <p className="mt-1 text-sm text-slate-500">Refine price offers.</p>
         </div>
-        {(inStockOnly || excludedStores.length > 0) && <button type="button" onClick={onClear} className="text-sm font-semibold text-violet-600 hover:text-violet-500">Clear</button>}
+        {(excludedStores.length > 0 || componentBrand || minPrice || maxPrice) && <button type="button" onClick={onClear} className="text-sm font-semibold text-violet-600 hover:text-violet-500">Clear</button>}
       </div>
       <div className="space-y-5 pt-5">
-        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50">
-          <input type="checkbox" checked={inStockOnly} onChange={(event) => onInStockChange(event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />
-          In stock only
-        </label>
         <fieldset>
-          <legend className="mb-3 text-sm font-semibold text-slate-900">Retailers</legend>
+          <legend className="mb-3 text-sm font-semibold text-slate-900">Component brand</legend>
+          <select value={componentBrand} onChange={(event) => onBrandChange(event.target.value)} disabled={!brands.length} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-60">
+            <option value="">{brands.length ? 'All brands' : 'Brands load with results'}</option>
+            {brands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+          </select>
+        </fieldset>
+        <fieldset>
+          <legend className="mb-3 text-sm font-semibold text-slate-900">Price range</legend>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="sr-only" htmlFor="sidebar-min-price">Minimum price</label>
+            <input id="sidebar-min-price" type="number" min="0" inputMode="numeric" value={minPrice} onChange={(event) => onMinPriceChange(event.target.value)} placeholder="Min ₹" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100" />
+            <label className="sr-only" htmlFor="sidebar-max-price">Maximum price</label>
+            <input id="sidebar-max-price" type="number" min="0" inputMode="numeric" value={maxPrice} onChange={(event) => onMaxPriceChange(event.target.value)} placeholder="Max ₹" className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100" />
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend className="mb-3 text-sm font-semibold text-slate-900">Company / store</legend>
           {stores.length ? <div className="space-y-2">{stores.map((store) => <label key={store} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600"><input type="checkbox" checked={!excludedStores.includes(store)} onChange={(event) => onStoreToggle(store, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500" />{store}</label>)}</div> : <p className="text-sm text-slate-500">Retailers will appear once offers load.</p>}
         </fieldset>
       </div>
@@ -222,29 +254,55 @@ export default function SearchResults() {
   const [inputValue, setInputValue] = useState(queryParam);
   const { data, isLoading, error, retry } = useRetailerSearch(queryParam);
 
-  // Filters state
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [excludedStores, setExcludedStores] = useState<string[]>([]);
-
-  // Keep input in sync when URL changes (e.g. back/forward)
-  useEffect(() => { setInputValue(queryParam); }, [queryParam]);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = inputValue.trim();
-    if (!trimmed) return;
-    setSearchParams({ q: trimmed }, { replace: false });
+    if (inputValue.trim()) {
+      setSearchParams({ q: inputValue.trim() });
+    }
   };
 
+  // Filters state
+  const [excludedStores, setExcludedStores] = useState<string[]>([]);
+  const [componentBrand, setComponentBrand] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+
   const availableStores = data ? Array.from(new Set(data.offers.map(o => o.storeName))) : [];
+  const availableBrands = data
+    ? Array.from(new Set(data.offers.map((offer) => getComponentBrand(offer.productName)))).sort()
+    : [];
   
   const filteredOffers = data?.offers.filter(offer => {
-    if (inStockOnly && !isAvailable(offer.availability)) return false;
     if (excludedStores.includes(offer.storeName)) return false;
+    if (componentBrand && getComponentBrand(offer.productName) !== componentBrand) return false;
+    if (minPrice && offer.price < Number(minPrice)) return false;
+    if (maxPrice && offer.price > Number(maxPrice)) return false;
     return true;
   }) ?? [];
 
-  const cheapestOffer = data?.cheapestOffer ?? null;
+  const cheapestOffer = filteredOffers.reduce<RetailerOffer | null>(
+    (lowest, offer) => !lowest || offer.price < lowest.price ? offer : lowest,
+    null,
+  );
+
+  const filterProps = {
+    excludedStores,
+    stores: availableStores,
+    componentBrand,
+    brands: availableBrands,
+    minPrice,
+    maxPrice,
+    onStoreToggle: (store: string, included: boolean) => setExcludedStores((current) => included ? current.filter((item) => item !== store) : [...current, store]),
+    onBrandChange: setComponentBrand,
+    onMinPriceChange: setMinPrice,
+    onMaxPriceChange: setMaxPrice,
+    onClear: () => {
+      setExcludedStores([]);
+      setComponentBrand('');
+      setMinPrice('');
+      setMaxPrice('');
+    },
+  };
 
   return (
     <section className="space-y-8">
@@ -300,16 +358,16 @@ export default function SearchResults() {
 
       {/* -- Loading state -- */}
       {isLoading && (
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <SearchFilters inStockOnly={inStockOnly} excludedStores={excludedStores} stores={[]} onInStockChange={setInStockOnly} onStoreToggle={() => undefined} onClear={() => { setInStockOnly(false); setExcludedStores([]); }} />
+        <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
+          <SearchFilters {...filterProps} />
           <div className="space-y-6"><ScrapingStatus /><LoadingSkeleton /></div>
         </div>
       )}
 
       {/* -- Error state -- */}
       {!isLoading && error && (
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <SearchFilters inStockOnly={inStockOnly} excludedStores={excludedStores} stores={[]} onInStockChange={setInStockOnly} onStoreToggle={() => undefined} onClear={() => { setInStockOnly(false); setExcludedStores([]); }} />
+        <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
+          <SearchFilters {...filterProps} />
           <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center">
           <HiOutlineExclamationCircle className="mx-auto h-11 w-11 text-rose-400" />
           <h2 className="mt-4 text-lg font-semibold text-rose-800">Could not fetch prices</h2>
@@ -328,19 +386,21 @@ export default function SearchResults() {
 
       {/* -- Results -- */}
       {!isLoading && !error && data && (
-        <div className="grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)] lg:items-start">
-          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6">
+        <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
+          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:sticky md:top-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
                 <p className="mt-1 text-sm text-slate-500">Refine price offers.</p>
               </div>
-              {(inStockOnly || excludedStores.length > 0) && (
+              {(excludedStores.length > 0 || componentBrand || minPrice || maxPrice) && (
                 <button
                   type="button"
                   onClick={() => {
-                    setInStockOnly(false);
                     setExcludedStores([]);
+                    setComponentBrand('');
+                    setMinPrice('');
+                    setMaxPrice('');
                   }}
                   className="text-sm font-semibold text-violet-600 transition hover:text-violet-500"
                 >
@@ -349,19 +409,47 @@ export default function SearchResults() {
               )}
             </div>
             <div className="space-y-5 pt-5">
-              <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:bg-violet-50">
+              <fieldset>
+                <legend className="mb-3 text-sm font-semibold text-slate-900">Component brand</legend>
+                <select
+                  value={componentBrand}
+                  onChange={(event) => setComponentBrand(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                >
+                  <option value="">All brands</option>
+                  {availableBrands.map((brand) => <option key={brand} value={brand}>{brand}</option>)}
+                </select>
+              </fieldset>
+              <fieldset>
+                <legend className="mb-3 text-sm font-semibold text-slate-900">Price range</legend>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="sr-only" htmlFor="min-price">Minimum price</label>
                   <input
-                    type="checkbox"
-                    id="inStockOnly"
-                    checked={inStockOnly}
-                    onChange={(e) => setInStockOnly(e.target.checked)}
-                    className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                    id="min-price"
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={minPrice}
+                    onChange={(event) => setMinPrice(event.target.value)}
+                    placeholder="Min ₹"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
                   />
-                  In stock only
-              </label>
+                  <label className="sr-only" htmlFor="max-price">Maximum price</label>
+                  <input
+                    id="max-price"
+                    type="number"
+                    min="0"
+                    inputMode="numeric"
+                    value={maxPrice}
+                    onChange={(event) => setMaxPrice(event.target.value)}
+                    placeholder="Max ₹"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100"
+                  />
+                </div>
+              </fieldset>
               {availableStores.length > 0 && (
                 <fieldset>
-                  <legend className="mb-3 text-sm font-semibold text-slate-900">Retailers</legend>
+                  <legend className="mb-3 text-sm font-semibold text-slate-900">Company / store</legend>
                   <div className="space-y-2">
                     {availableStores.map((store) => (
                       <label key={store} className="flex cursor-pointer items-center gap-2.5 text-sm text-slate-600">
