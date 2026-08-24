@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   HiChevronLeft,
@@ -334,42 +334,6 @@ export default function LandingPage() {
   return (
     <div className="space-y-8 pb-10">
 
-      {/* 1. Category Strip */}
-      <section className="bg-white border border-slate-200/80 rounded-[1.5rem] py-4 px-6 shadow-sm overflow-x-auto scrollbar-none flex justify-between gap-6 md:gap-4 min-w-full">
-        {categoryStrip.map((cat) => (
-          <button
-            key={cat.label}
-            onClick={() => setActiveTab(cat.label)}
-            className={`flex flex-col items-center gap-1.5 flex-shrink-0 group transition ${
-              activeTab === cat.label ? 'text-violet-600 scale-105' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            <div className={`h-12 w-12 rounded-full flex items-center justify-center text-xl shadow-sm transition ${
-              activeTab === cat.label
-                ? 'bg-violet-100 text-violet-700 ring-2 ring-violet-500/20'
-                : 'bg-slate-50 text-slate-600 group-hover:bg-slate-100'
-            }`}>
-              {CATEGORY_ICONS[cat.label] ?? cat.label.charAt(0)}
-            </div>
-            <span className="text-xs font-semibold tracking-wide whitespace-nowrap">{cat.label}</span>
-          </button>
-        ))}
-        <button
-          onClick={() => setActiveTab('All')}
-          className={`flex flex-col items-center gap-1.5 flex-shrink-0 transition ${
-            activeTab === 'All' ? 'text-violet-600 scale-105' : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <div className={`h-12 w-12 rounded-full flex items-center justify-center text-sm font-bold shadow-sm transition ${
-            activeTab === 'All'
-              ? 'bg-violet-100 text-violet-700 ring-2 ring-violet-500/20'
-              : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-          }`}>
-            All
-          </div>
-          <span className="text-xs font-semibold tracking-wide">Show All</span>
-        </button>
-      </section>
 
       {/* 2. Hero Carousel */}
       <section className="relative overflow-hidden rounded-[2rem] bg-slate-900 text-white min-h-[260px] flex items-center shadow-lg">

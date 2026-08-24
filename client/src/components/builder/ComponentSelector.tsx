@@ -1,3 +1,4 @@
+import { HiMagnifyingGlass } from 'react-icons/hi2';
 import type { BuilderOption, ComponentCategory } from '../../types/builder';
 
 interface ComponentSelectorProps {
@@ -6,67 +7,77 @@ interface ComponentSelectorProps {
   selectedId: string | null;
   loading: boolean;
   onSelect: (option: BuilderOption) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
-export default function ComponentSelector({ category, options, selectedId, loading, onSelect }: ComponentSelectorProps) {
-  if (loading) {
-    return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
-        Loading component options...
-      </div>
-    );
-  }
-
-  if (options.length === 0) {
-    return (
-      <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500 shadow-sm">
-        No {category} options are available right now.
-      </div>
-    );
-  }
-
+export default function ComponentSelector({ category, options, selectedId, loading, onSelect, searchQuery = '', onSearchChange }: ComponentSelectorProps) {
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Select {category}</p>
-        <h3 className="mt-2 text-xl font-semibold text-slate-900">Choose the best option for your build</h3>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Select {category}</p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-900">Choose the best option for your build</h3>
+        </div>
+        {onSearchChange && (
+          <div className="relative w-full sm:w-64 shrink-0">
+            <HiMagnifyingGlass className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder={`Search ${category}...`}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-violet-500 focus:ring-1 focus:ring-violet-500 dark:bg-slate-50"
+            />
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {options.map((option) => {
-          const isSelected = option.id === selectedId;
-          return (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => onSelect(option)}
-              className={`group flex flex-col gap-4 rounded-3xl border p-5 text-left transition ${
-                isSelected
-                  ? 'border-violet-500 bg-violet-50 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-lg font-semibold text-slate-900">{option.name}</p>
-                  <p className="mt-1 text-sm text-slate-500">{option.brand}</p>
+      {loading ? (
+        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
+          Loading component options...
+        </div>
+      ) : options.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-slate-500 shadow-sm">
+          No {category} options are available right now.
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {options.map((option) => {
+            const isSelected = option.id === selectedId;
+            return (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => onSelect(option)}
+                className={`group flex flex-col gap-4 rounded-3xl border p-5 text-left transition ${
+                  isSelected
+                    ? 'border-violet-500 bg-violet-50 shadow-sm'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-semibold text-slate-900">{option.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">{option.brand}</p>
+                  </div>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600">
+                    {option.category}
+                  </span>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-slate-600">
-                  {option.category}
-                </span>
-              </div>
 
-              <div className="grid gap-2 text-slate-600">
-                <p>{option.description}</p>
-                <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-                  <span>Price: ${option.price.toFixed(2)}</span>
-                  <span>Power: {option.powerWatts}W</span>
+                <div className="grid gap-2 text-slate-600">
+                  <p>{option.description}</p>
+                  <div className="flex flex-wrap gap-2 text-sm text-slate-500">
+                    <span>Price: ₹{option.price.toFixed(2)}</span>
+                    <span>Power: {option.powerWatts}W</span>
+                  </div>
                 </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

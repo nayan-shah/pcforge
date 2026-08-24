@@ -102,8 +102,17 @@ export default function PCBuilderPage() {
   const [loading, setLoading] = useState(false);
   const [availableOptions, setAvailableOptions] = useState<BuilderOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
 
   const activeCategory = buildSteps[activeStepIndex].category;
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
 
   useEffect(() => {
     let ignore = false;
@@ -113,7 +122,7 @@ export default function PCBuilderPage() {
 
       try {
         const categories = builderToBackendCategoryMap[activeCategory];
-        const requests = categories.map((category) => getComponents({ category, limit: 20 }));
+        const requests = categories.map((category) => getComponents({ category, limit: 20, search: debouncedSearch }));
         const results = await Promise.all(requests);
         const merged = results.flatMap((result) => result.components.map((component) => mapComponentToBuilderOption(component)));
 
@@ -135,7 +144,7 @@ export default function PCBuilderPage() {
     return () => {
       ignore = true;
     };
-  }, [activeCategory]);
+  }, [activeCategory, debouncedSearch]);
 
   const selectedOption = selections[selectionKeyMap[activeCategory]];
 
@@ -145,14 +154,17 @@ export default function PCBuilderPage() {
 
   function handleSelectStep(index: number) {
     setActiveStepIndex(index);
+    setSearchQuery('');
   }
 
   function goToNextStep() {
     setActiveStepIndex((current) => Math.min(current + 1, buildSteps.length - 1));
+    setSearchQuery('');
   }
 
   function goToPreviousStep() {
     setActiveStepIndex((current) => Math.max(current - 1, 0));
+    setSearchQuery('');
   }
 
   async function handleSaveBuild() {
@@ -267,6 +279,8 @@ export default function PCBuilderPage() {
             selectedId={selectedOption?.id ?? null}
             loading={isLoadingOptions}
             onSelect={handleSelectOption}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
           <BuildSummary
             selectedComponents={selectedComponents}

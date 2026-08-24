@@ -1,7 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import AdminRoute from './components/admin/AdminRoute';
-import Admin from './pages/Admin';
 import AI from './pages/AI';
 import Builder from './pages/Builder';
 import Compare from './pages/Compare';
