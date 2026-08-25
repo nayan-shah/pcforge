@@ -1,5 +1,5 @@
-import { ApiError } from '../utils/apiError.js';
-import { searchRetailers } from '../services/searchOrchestratorService.js';
+import { ApiError } from '../../../utils/apiError.js';
+import { searchRetailers } from '../../../services/searchOrchestratorService.js';
 
 export const searchProducts = async (req, res, next) => {
   try {

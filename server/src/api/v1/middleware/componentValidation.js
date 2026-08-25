@@ -1,6 +1,6 @@
 import { body, validationResult } from 'express-validator';
 import { deleteCloudinaryImages, getUploadedImageUrls } from './uploadMiddleware.js';
-import { ApiError } from '../utils/apiError.js';
+import { ApiError } from '../../../utils/apiError.js';
 
 const CATEGORIES = ['CPU', 'GPU', 'Motherboard', 'RAM', 'SSD', 'HDD', 'PSU', 'Cabinet', 'Cooler', 'Monitor', 'Keyboard', 'Mouse'];
 const STOCK_STATUSES = ['In Stock', 'Out of Stock', 'Preorder'];

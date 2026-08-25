@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
-import { ApiError } from '../utils/apiError.js';
+import User from '../../../models/User.js';
+import { ApiError } from '../../../utils/apiError.js';
 
 /**
  * Verifies the Bearer JWT and attaches the decoded payload to req.user.

@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import Component from '../models/Component.js';
+import Component from '../../../models/Component.js';
 import { deleteCloudinaryImages, getUploadedImageUrls } from '../middleware/uploadMiddleware.js';
-import { ApiError, notFound } from '../utils/apiError.js';
-import { sendSuccess } from '../utils/apiResponse.js';
-import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../services/priceComparisonService.js';
+import { ApiError, notFound } from '../../../utils/apiError.js';
+import { sendSuccess } from '../../../utils/apiResponse.js';
+import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../../../services/priceComparisonService.js';
 
 const MAX_LIMIT = 100;
 const SORTS = {

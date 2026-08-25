@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import Build from '../models/Build.js';
-import User from '../models/User.js';
-import { ApiError } from '../utils/apiError.js';
-import { sendSuccess } from '../utils/apiResponse.js';
+import Build from '../../../models/Build.js';
+import User from '../../../models/User.js';
+import { ApiError } from '../../../utils/apiError.js';
+import { sendSuccess } from '../../../utils/apiResponse.js';
 
 const buildSelect = '_id user name components totalPrice totalPower createdAt updatedAt';
 

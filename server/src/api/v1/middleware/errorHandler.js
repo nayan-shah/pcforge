@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { ApiError } from '../utils/apiError.js';
+import { ApiError } from '../../../utils/apiError.js';
 
 const normaliseError = (err) => {
   if (err instanceof ApiError) return err;
