@@ -92,16 +92,19 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
         const price = item.prices?.[0];
         const offerPrice = price?.currentPrice ?? price?.price ?? 0;
         const offerCurrency = price?.currency ?? 'INR';
-        return price
-          ? `${offerCurrency} ${offerPrice.toLocaleString()}`
-          : <span className="text-slate-400">—</span>;
+        return price ? (
+          `${offerCurrency} ${offerPrice.toLocaleString()}`
+        ) : (
+          <span className="text-slate-400">—</span>
+        );
       },
     },
     {
       header: 'Stock',
       accessor: (item: ComponentDetail) => {
         const statusColors: Record<string, string> = {
-          'In Stock': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+          'In Stock':
+            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
           'Out of Stock': 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
           Preorder: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
         };

@@ -1,4 +1,4 @@
-﻿import { load } from "cheerio";
+import { load } from "cheerio";
 
 const BASE_URL = "https://www.vedantcomputers.com";
 const text = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
@@ -25,7 +25,7 @@ export function parseVedantSearchHtml(html) {
     const products = [];
     $(".product-layout, .product-thumb").each((_, node) => {
       const card = $(node);
-      const link = card.find(".caption a, .product-name a, h4 a, a[href*=product_id]").first();
+      const link = card.find(".name a, .caption a, .product-name a, h4 a, a[href*=product_id]").first();
       const name = text(link.text()) || text(link.attr("title")) || text(card.find("strong, .name").first().text());
       const url = absoluteUrl(link.attr("href"));
       const image = card.find("img").first();

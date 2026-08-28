@@ -16,51 +16,17 @@ import type { ComponentDetail } from '../../types/component';
 
 // ── Helpers ─────────────────────────────────────────────────────────
 
-const formatPrice = (price: number, currency = 'INR') =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(price);
-
-const CATEGORY_ICONS: Record<string, string> = {
-  CPU: '🎛️', GPU: '📼', RAM: '🐏', Motherboard: '🧩',
-  SSD: '💾', HDD: '🖴', PSU: '⚡', Cabinet: '🖥️',
-  Cooler: '🌀', Monitor: '🖵', Keyboard: '⌨️', Mouse: '🖱️',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  CPU: 'bg-blue-50 text-blue-700 border-blue-100',
-  GPU: 'bg-violet-50 text-violet-700 border-violet-100',
-  RAM: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  Motherboard: 'bg-orange-50 text-orange-700 border-orange-100',
-  SSD: 'bg-cyan-50 text-cyan-700 border-cyan-100',
-  HDD: 'bg-slate-50 text-slate-700 border-slate-200',
-  PSU: 'bg-yellow-50 text-yellow-700 border-yellow-100',
-  Cabinet: 'bg-rose-50 text-rose-700 border-rose-100',
-  Cooler: 'bg-teal-50 text-teal-700 border-teal-100',
-  Monitor: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-  Keyboard: 'bg-pink-50 text-pink-700 border-pink-100',
-  Mouse: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-100',
-};
-
-function getLowestPrice(component: ComponentDetail) {
-  if (!component.prices || component.prices.length === 0) return null;
-  let lowest = Infinity;
-  let currency = 'INR';
-  for (const p of component.prices) {
-    const v = p.price ?? p.currentPrice ?? Infinity;
-    if (v < lowest) { lowest = v; currency = p.currency ?? 'INR'; }
-  }
-  return lowest === Infinity ? null : { price: lowest, currency };
-}
+import { formatPrice } from '../../utils/formatters';
+import { getLowestPrice } from '../../utils/price';
+import { CATEGORY_ICONS, CATEGORY_COLORS } from '../../constants/categories';
 
 // ── Live Featured Component Card ─────────────────────────────────────
 
 function FeaturedCard({ component }: { component: ComponentDetail }) {
   const navigate = useNavigate();
   const lowestOffer = getLowestPrice(component);
-  const catColor = CATEGORY_COLORS[component.category] ?? 'bg-slate-50 text-slate-700 border-slate-200';
+  const catColor =
+    CATEGORY_COLORS[component.category] ?? 'bg-slate-50 text-slate-700 border-slate-200';
   const icon = CATEGORY_ICONS[component.category] ?? '📦';
   const storeCount = component.prices?.filter((p) => p.productUrl).length ?? 0;
 
@@ -113,11 +79,15 @@ function FeaturedCard({ component }: { component: ComponentDetail }) {
       <div className="flex flex-1 flex-col justify-between p-4 space-y-3">
         <div className="space-y-1.5">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${catColor}`}>
+            <span
+              className={`rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${catColor}`}
+            >
               {component.category}
             </span>
             {component.rating > 0 && (
-              <span className="text-[10px] font-bold text-amber-500">{component.rating.toFixed(1)} ★</span>
+              <span className="text-[10px] font-bold text-amber-500">
+                {component.rating.toFixed(1)} ★
+              </span>
             )}
           </div>
           <h3 className="line-clamp-2 text-sm font-bold text-slate-900 leading-snug">
@@ -185,7 +155,9 @@ function DealCard({ component }: { component: ComponentDetail }) {
               {component.category}
             </span>
             {component.rating > 0 && (
-              <span className="text-[10px] font-bold text-amber-500">{component.rating.toFixed(1)} ★</span>
+              <span className="text-[10px] font-bold text-amber-500">
+                {component.rating.toFixed(1)} ★
+              </span>
             )}
           </div>
           <h3 className="font-bold text-slate-900 text-xs line-clamp-2 min-h-[32px] leading-tight mt-1.5">
@@ -210,7 +182,10 @@ function DealCard({ component }: { component: ComponentDetail }) {
             <p className="text-xs text-slate-400 italic">Price unavailable</p>
           )}
           <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/components/${component._id}`); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/components/${component._id}`);
+            }}
             className="w-full py-2 rounded-full bg-slate-950 text-[11px] font-bold text-white transition hover:bg-violet-600 shadow-sm"
           >
             Compare Prices
@@ -227,7 +202,10 @@ function GridSkeleton({ count, tall = false }: { count: number; tall?: boolean }
   return (
     <>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="animate-pulse rounded-3xl border border-slate-100 bg-white overflow-hidden">
+        <div
+          key={i}
+          className="animate-pulse rounded-3xl border border-slate-100 bg-white overflow-hidden"
+        >
           <div className={`bg-slate-100 ${tall ? 'h-44' : 'h-36'}`} />
           <div className="p-4 space-y-2">
             <div className="h-3 w-16 rounded-full bg-slate-100" />
@@ -240,19 +218,6 @@ function GridSkeleton({ count, tall = false }: { count: number; tall?: boolean }
     </>
   );
 }
-
-// ── Category strip data ───────────────────────────────────────────────
-
-const categoryStrip = [
-  { label: 'CPU', tag: 'Processors' },
-  { label: 'GPU', tag: 'Graphics' },
-  { label: 'RAM', tag: 'Memory' },
-  { label: 'Motherboard', tag: 'Boards' },
-  { label: 'SSD', tag: 'Storage' },
-  { label: 'PSU', tag: 'Power Supplies' },
-  { label: 'Cooler', tag: 'Cooling' },
-  { label: 'Cabinet', tag: 'Cases' },
-];
 
 // ── Main LandingPage ──────────────────────────────────────────────────
 
@@ -280,12 +245,13 @@ export default function LandingPage() {
     }
   }, []);
 
-  useEffect(() => { loadFeatured(); }, [loadFeatured]);
+  useEffect(() => {
+    loadFeatured();
+  }, [loadFeatured]);
 
   // Filtered by active category tab
-  const filtered = activeTab === 'All'
-    ? featured
-    : featured.filter((c) => c.category === activeTab);
+  const filtered =
+    activeTab === 'All' ? featured : featured.filter((c) => c.category === activeTab);
 
   // Carousel slides
   const slides = [
@@ -333,8 +299,6 @@ export default function LandingPage() {
 
   return (
     <div className="space-y-8 pb-10">
-
-
       {/* 2. Hero Carousel */}
       <section className="relative overflow-hidden rounded-[2rem] bg-slate-900 text-white min-h-[260px] flex items-center shadow-lg">
         <div className="absolute inset-0 w-full h-full">
@@ -349,8 +313,12 @@ export default function LandingPage() {
                 <span className="bg-white/10 backdrop-blur-sm border border-white/10 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-slate-200">
                   Featured
                 </span>
-                <h1 className="text-3xl font-extrabold sm:text-4xl leading-tight tracking-tight">{slide.title}</h1>
-                <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">{slide.desc}</p>
+                <h1 className="text-3xl font-extrabold sm:text-4xl leading-tight tracking-tight">
+                  {slide.title}
+                </h1>
+                <p className="text-sm sm:text-base text-slate-200 leading-relaxed max-w-xl">
+                  {slide.desc}
+                </p>
                 <div className="pt-2">
                   <button
                     onClick={slide.action}
@@ -390,7 +358,9 @@ export default function LandingPage() {
       <section className="bg-white border border-slate-200/80 rounded-[2rem] p-6 shadow-sm space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Deals of the Day</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              Deals of the Day
+            </h2>
             <div className="flex items-center gap-1.5 bg-rose-50 text-rose-600 text-xs font-bold px-3 py-1 rounded-full border border-rose-100">
               <HiClock className="h-4 w-4 animate-pulse" />
               <span>
@@ -409,7 +379,10 @@ export default function LandingPage() {
               <HiOutlineRefresh className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
-            <Link to="/components" className="text-xs font-bold text-violet-600 hover:text-violet-500 transition">
+            <Link
+              to="/components"
+              className="text-xs font-bold text-violet-600 hover:text-violet-500 transition"
+            >
               View All →
             </Link>
           </div>
@@ -428,10 +401,11 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {isLoading
-              ? <GridSkeleton count={4} />
-              : featured.slice(0, 4).map((c) => <DealCard key={c._id} component={c} />)
-            }
+            {isLoading ? (
+              <GridSkeleton count={4} />
+            ) : (
+              featured.slice(0, 4).map((c) => <DealCard key={c._id} component={c} />)
+            )}
           </div>
         )}
       </section>
@@ -445,7 +419,8 @@ export default function LandingPage() {
             </div>
             <h3 className="text-2xl font-bold">Build Your Custom PC</h3>
             <p className="text-slate-100 text-xs leading-relaxed max-w-sm">
-              Combine components from your cart or catalog to configure your setup with live compatibility checks.
+              Combine components from your cart or catalog to configure your setup with live
+              compatibility checks.
             </p>
           </div>
           <div className="pt-4">
@@ -459,14 +434,17 @@ export default function LandingPage() {
         </div>
 
         <div className="rounded-[2rem] border border-slate-200 bg-white p-8 flex flex-col justify-between min-h-[220px] shadow-sm hover:shadow-md transition relative overflow-hidden">
-          <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 text-slate-50 text-9xl font-bold select-none">AI</div>
+          <div className="absolute right-0 bottom-0 translate-x-12 translate-y-12 text-slate-50 text-9xl font-bold select-none">
+            AI
+          </div>
           <div className="space-y-3">
             <div className="inline-flex rounded-full bg-violet-100 px-3 py-1 text-[10px] uppercase font-bold tracking-wider text-violet-600">
               AI Intelligent Matching
             </div>
             <h3 className="text-2xl font-bold text-slate-900">Ask the AI Assistant</h3>
             <p className="text-slate-500 text-xs leading-relaxed max-w-sm">
-              Not sure which component fits your budget? Explain your use case and get a build sheet in seconds.
+              Not sure which component fits your budget? Explain your use case and get a build sheet
+              in seconds.
             </p>
           </div>
           <div className="pt-4">
@@ -484,25 +462,31 @@ export default function LandingPage() {
       <section className="bg-white border border-slate-200/80 rounded-[2rem] p-6 shadow-sm space-y-6">
         <div className="border-b border-slate-100 pb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Shop by Component</h2>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              Shop by Component
+            </h2>
             <p className="text-xs text-slate-500 mt-1">
-              {isLoading ? 'Loading live prices…' : `${featured.length} components with live prices from multiple stores`}
+              {isLoading
+                ? 'Loading live prices…'
+                : `${featured.length} components with live prices from multiple stores`}
             </p>
           </div>
           <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
-            {['All', 'CPU', 'GPU', 'RAM', 'Motherboard', 'SSD', 'PSU', 'Cooler', 'Cabinet'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${
-                  activeTab === tab
-                    ? 'bg-violet-600 text-white shadow-sm'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
-              >
-                {tab === 'All' ? 'All Products' : tab}
-              </button>
-            ))}
+            {['All', 'CPU', 'GPU', 'RAM', 'Motherboard', 'SSD', 'PSU', 'Cooler', 'Cabinet'].map(
+              (tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${
+                    activeTab === tab
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  {tab === 'All' ? 'All Products' : tab}
+                </button>
+              ),
+            )}
           </div>
         </div>
 
@@ -516,15 +500,24 @@ export default function LandingPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
-            <p className="text-sm font-semibold text-slate-600">No {activeTab !== 'All' ? activeTab : ''} components in the catalog yet.</p>
-            <p className="mt-1 text-xs text-slate-400">Add components via the admin panel, or try a different category.</p>
-            <Link to="/components" className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:underline">
+            <p className="text-sm font-semibold text-slate-600">
+              No {activeTab !== 'All' ? activeTab : ''} components in the catalog yet.
+            </p>
+            <p className="mt-1 text-xs text-slate-400">
+              Add components via the admin panel, or try a different category.
+            </p>
+            <Link
+              to="/components"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:underline"
+            >
               Browse catalog <HiOutlineArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.map((c) => <FeaturedCard key={c._id} component={c} />)}
+            {filtered.map((c) => (
+              <FeaturedCard key={c._id} component={c} />
+            ))}
           </div>
         )}
       </section>
@@ -538,7 +531,8 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold text-slate-950 text-sm">Free & Insured Delivery</h4>
             <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-              Every component ships in multi-layer shockproof packaging, fully insured for damage or loss.
+              Every component ships in multi-layer shockproof packaging, fully insured for damage or
+              loss.
             </p>
           </div>
         </div>
@@ -560,12 +554,12 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold text-slate-950 text-sm">Real-time Price Engine</h4>
             <p className="text-slate-500 text-xs mt-1 leading-relaxed">
-              Live prices scraped from MDComputers, PrimeABGB, and Vedant — always the cheapest deal.
+              Live prices scraped from MDComputers, PrimeABGB, and Vedant — always the cheapest
+              deal.
             </p>
           </div>
         </div>
       </section>
-
     </div>
   );
 }

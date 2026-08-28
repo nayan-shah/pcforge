@@ -94,9 +94,7 @@ export default function DeleteConfirmModal({
             &ldquo;{itemName}&rdquo;
           </span>
           ? This action{' '}
-          <span className="font-semibold text-rose-600 dark:text-rose-400">
-            cannot be undone
-          </span>{' '}
+          <span className="font-semibold text-rose-600 dark:text-rose-400">cannot be undone</span>{' '}
           and will permanently remove the component and its images.
         </p>
 

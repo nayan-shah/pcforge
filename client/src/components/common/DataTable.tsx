@@ -29,7 +29,10 @@ export default function DataTable<T>({ columns, data, rowKey, emptyState }: Data
           <thead className="bg-slate-100 text-slate-500">
             <tr>
               {columns.map((column) => (
-                <th key={column.header} className={`px-6 py-4 font-semibold ${column.className ?? ''}`}>
+                <th
+                  key={column.header}
+                  className={`px-6 py-4 font-semibold ${column.className ?? ''}`}
+                >
                   {column.header}
                 </th>
               ))}
@@ -37,9 +40,15 @@ export default function DataTable<T>({ columns, data, rowKey, emptyState }: Data
           </thead>
           <tbody>
             {data.map((item) => (
-              <tr key={rowKey(item)} className="border-t border-slate-200 bg-white hover:bg-slate-50">
+              <tr
+                key={rowKey(item)}
+                className="border-t border-slate-200 bg-white hover:bg-slate-50"
+              >
                 {columns.map((column) => (
-                  <td key={column.header} className={`px-6 py-4 align-top ${column.className ?? ''}`}>
+                  <td
+                    key={column.header}
+                    className={`px-6 py-4 align-top ${column.className ?? ''}`}
+                  >
                     {column.accessor(item)}
                   </td>
                 ))}

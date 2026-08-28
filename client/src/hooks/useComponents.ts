@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as componentApi from '../api/componentApi';
-import type {
-  ComponentDetail,
-  ComponentFormData,
-  Toast,
-} from '../types/component';
+import type { ComponentDetail, ComponentFormData, Toast } from '../types/component';
+import { ADMIN_PAGE_SIZE } from '../constants/pagination';
 
 /**
  * useComponents — custom hook that owns all CRUD state for the admin
@@ -22,7 +19,6 @@ import type {
  * • Toast auto-dismiss — toasts are removed after 4 s to keep the UI tidy.
  */
 
-const PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 400;
 const TOAST_DURATION_MS = 4_000;
 
@@ -89,7 +85,7 @@ export default function useComponents() {
         brand: brand || undefined,
         sort,
         page: currentPage,
-        limit: PAGE_SIZE,
+        limit: ADMIN_PAGE_SIZE,
       });
 
       setComponents(result.components);

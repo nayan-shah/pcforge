@@ -76,7 +76,9 @@ export default function Register() {
           >
             PCForge
           </Link>
-          <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">Create an account</h2>
+          <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-900">
+            Create an account
+          </h2>
           <p className="mt-2 text-sm text-slate-600">
             Start building your dream gaming rig or workstation today
           </p>
@@ -132,7 +134,6 @@ export default function Register() {
               </div>
             </div>
 
-
             {/* Password Input */}
             <div>
               <label className="text-sm font-semibold text-slate-700">Password</label>
@@ -181,7 +182,14 @@ export default function Register() {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
                   <path
                     className="opacity-75"
                     fill="currentColor"
@@ -197,7 +205,10 @@ export default function Register() {
 
         <div className="text-center text-sm text-slate-600 mt-4">
           Already have an account?{' '}
-          <Link to="/login" className="font-semibold text-violet-600 hover:text-violet-700 transition">
+          <Link
+            to="/login"
+            className="font-semibold text-violet-600 hover:text-violet-700 transition"
+          >
             Login
           </Link>
         </div>

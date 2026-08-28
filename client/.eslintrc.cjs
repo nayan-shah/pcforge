@@ -9,24 +9,24 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
     'plugin:@typescript-eslint/recommended',
-    'prettier'
+    'prettier',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2021,
     sourceType: 'module',
     ecmaFeatures: {
-      jsx: true
-    }
+      jsx: true,
+    },
   },
   plugins: ['react', 'react-hooks', '@typescript-eslint', 'tailwindcss'],
   rules: {
     'tailwindcss/classnames-order': 'warn',
-    'tailwindcss/no-custom-classname': 'off'
+    'tailwindcss/no-custom-classname': 'off',
   },
   settings: {
     react: {
-      version: 'detect'
-    }
-  }
+      version: 'detect',
+    },
+  },
 };

@@ -54,16 +54,23 @@ export default function Profile() {
 
         <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <img
-            src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}
+            src={
+              user.avatar ||
+              'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+            }
             alt={user.name}
             className="h-24 w-24 rounded-3xl object-cover border-2 border-violet-100 shadow-md shadow-violet-500/5 flex-shrink-0"
           />
           <div className="flex-1 text-center sm:text-left space-y-2">
             <div className="flex flex-col items-center gap-2 sm:flex-row">
               <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{user.name}</h1>
-              <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
-                user.role === 'admin' ? 'bg-indigo-50 text-indigo-700 border border-indigo-150' : 'bg-slate-100 text-slate-700 border border-slate-200'
-              }`}>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
+                  user.role === 'admin'
+                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-150'
+                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                }`}
+              >
                 <HiShieldCheck className="h-3.5 w-3.5" />
                 {user.role}
               </span>
@@ -73,10 +80,11 @@ export default function Profile() {
               {user.email}
             </p>
             <p className="text-xs text-slate-400">
-              Account level: <span className="font-semibold text-slate-500 capitalize">{user.role} User</span>
+              Account level:{' '}
+              <span className="font-semibold text-slate-500 capitalize">{user.role} User</span>
             </p>
           </div>
-          
+
           <button
             onClick={logout}
             className="flex items-center gap-2 rounded-2xl border border-rose-100 hover:border-rose-200 bg-rose-50/30 hover:bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition shadow-sm hover:shadow cursor-pointer self-center sm:self-start"
@@ -113,7 +121,10 @@ export default function Profile() {
             <div className="grid gap-4">
               {/* Future feature: mapping actual saved user builds */}
               {user.savedBuilds.map((buildId) => (
-                <div key={buildId} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                <div
+                  key={buildId}
+                  className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50"
+                >
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">Saved PC Rig</p>
                     <p className="text-xs text-slate-400">ID: {buildId}</p>
@@ -131,7 +142,8 @@ export default function Profile() {
             <div className="rounded-2xl border border-dashed border-slate-250 p-8 text-center text-slate-500">
               <p className="text-sm font-semibold">No saved PC configurations yet</p>
               <p className="mt-1 text-xs text-slate-400 max-w-xs mx-auto">
-                Use our PC Builder helper to configure components, estimate power usage, check compatibility, and save your builds.
+                Use our PC Builder helper to configure components, estimate power usage, check
+                compatibility, and save your builds.
               </p>
               <Link
                 to="/builder"
@@ -150,8 +162,10 @@ export default function Profile() {
           transition={{ delay: 0.2 }}
           className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4"
         >
-          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">Account Navigation</h3>
-          
+          <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
+            Account Navigation
+          </h3>
+
           <div className="flex flex-col gap-2">
             <Link
               to="/builder"
@@ -160,7 +174,7 @@ export default function Profile() {
               PC Builder Studio
             </Link>
             <Link
-              to="/compare"
+              to="/search"
               className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition"
             >
               Compare Components

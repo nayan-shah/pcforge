@@ -4,7 +4,7 @@ import axios from 'axios';
  * Centralized Axios instance for the PCForge API.
  *
  * - Base URL comes from the VITE_API_URL env variable, falling back to
- *   localhost:4000/api for local development.
+ *   localhost:5000/api/v1 for local development.
  * - The response interceptor unwraps the backend's standard
  *   { success, message, data } envelope so callers receive `data` directly.
  * - The error interceptor normalizes all failures into a predictable shape
@@ -33,7 +33,7 @@ apiClient.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // ── Response interceptor ─────────────────────────────────────────────

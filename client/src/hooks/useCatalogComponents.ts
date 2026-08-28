@@ -21,7 +21,9 @@ export default function useCatalogComponents(params: ComponentQueryParams) {
       .catch((requestError: unknown) => {
         if (active) {
           setData(null);
-          setError(requestError instanceof Error ? requestError.message : 'Unable to load components.');
+          setError(
+            requestError instanceof Error ? requestError.message : 'Unable to load components.',
+          );
         }
       })
       .finally(() => {
@@ -31,7 +33,15 @@ export default function useCatalogComponents(params: ComponentQueryParams) {
     return () => {
       active = false;
     };
-  }, [params.search, params.category, params.brand, params.sort, params.page, params.limit, retryKey]);
+  }, [
+    params.search,
+    params.category,
+    params.brand,
+    params.sort,
+    params.page,
+    params.limit,
+    retryKey,
+  ]);
 
   return { data, isLoading, error, retry: () => setRetryKey((value) => value + 1) };
 }

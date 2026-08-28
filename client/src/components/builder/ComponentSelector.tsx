@@ -1,6 +1,8 @@
 import { HiMagnifyingGlass } from 'react-icons/hi2';
 import type { BuilderOption, ComponentCategory } from '../../types/builder';
 
+import { formatPrice } from '../../utils/formatters';
+
 interface ComponentSelectorProps {
   category: ComponentCategory;
   options: BuilderOption[];
@@ -11,13 +13,25 @@ interface ComponentSelectorProps {
   onSearchChange?: (query: string) => void;
 }
 
-export default function ComponentSelector({ category, options, selectedId, loading, onSelect, searchQuery = '', onSearchChange }: ComponentSelectorProps) {
+export default function ComponentSelector({
+  category,
+  options,
+  selectedId,
+  loading,
+  onSelect,
+  searchQuery = '',
+  onSearchChange,
+}: ComponentSelectorProps) {
   return (
     <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Select {category}</p>
-          <h3 className="mt-2 text-xl font-semibold text-slate-900">Choose the best option for your build</h3>
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
+            Select {category}
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-900">
+            Choose the best option for your build
+          </h3>
         </div>
         {onSearchChange && (
           <div className="relative w-full sm:w-64 shrink-0">
@@ -69,7 +83,7 @@ export default function ComponentSelector({ category, options, selectedId, loadi
                 <div className="grid gap-2 text-slate-600">
                   <p>{option.description}</p>
                   <div className="flex flex-wrap gap-2 text-sm text-slate-500">
-                    <span>Price: ₹{option.price.toFixed(2)}</span>
+                    <span>Price: {formatPrice(option.price)}</span>
                     <span>Power: {option.powerWatts}W</span>
                   </div>
                 </div>

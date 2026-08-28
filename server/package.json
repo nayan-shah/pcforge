@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/index.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "start": "node src/index.js",
     "lint": "eslint . --ext .js"
   },

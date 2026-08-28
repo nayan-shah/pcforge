@@ -17,20 +17,24 @@ import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/catalog/Pagination';
 import useComponents from '../../hooks/useComponents';
 import type { ComponentFormData, Toast } from '../../types/component';
+import { SORT_OPTIONS } from '../../constants/sort';
 
 // ── Constants ────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  '', 'CPU', 'GPU', 'Motherboard', 'RAM', 'SSD', 'HDD',
-  'PSU', 'Cabinet', 'Cooler', 'Monitor', 'Keyboard', 'Mouse',
-] as const;
-
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'oldest', label: 'Oldest First' },
-  { value: 'priceLowToHigh', label: 'Price: Low → High' },
-  { value: 'priceHighToLow', label: 'Price: High → Low' },
-  { value: 'rating', label: 'Top Rated' },
+  '',
+  'CPU',
+  'GPU',
+  'Motherboard',
+  'RAM',
+  'SSD',
+  'HDD',
+  'PSU',
+  'Cabinet',
+  'Cooler',
+  'Monitor',
+  'Keyboard',
+  'Mouse',
 ] as const;
 
 // ── Toast icon helper ────────────────────────────────────────────────
@@ -238,7 +242,13 @@ export default function Components() {
             />
 
             {/* ── Pagination ──────────────────────────────────── */}
-            {totalPages > 1 && <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </>
         )}
       </div>

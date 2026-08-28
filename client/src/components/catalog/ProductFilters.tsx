@@ -36,10 +36,16 @@ export default function ProductFilters({
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
         <div>
           <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filters</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Narrow down your results.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            Narrow down your results.
+          </p>
         </div>
         {hasActiveFilters && (
-          <button type="button" onClick={onClear} className="text-sm font-semibold text-violet-600 transition hover:text-violet-500">
+          <button
+            type="button"
+            onClick={onClear}
+            className="text-sm font-semibold text-violet-600 transition hover:text-violet-500"
+          >
             Clear all
           </button>
         )}
@@ -47,7 +53,10 @@ export default function ProductFilters({
 
       <div className="space-y-5">
         <div>
-          <label htmlFor="category-filter" className="mb-2 block text-sm font-medium text-slate-700">
+          <label
+            htmlFor="category-filter"
+            className="mb-2 block text-sm font-medium text-slate-700"
+          >
             Category
           </label>
           <select

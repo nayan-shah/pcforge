@@ -48,7 +48,9 @@ export default function useProductDetails(productId: string) {
         setData(null);
         setComparison(null);
         setRelated([]);
-        setError(requestError instanceof Error ? requestError.message : 'Unable to load product details.');
+        setError(
+          requestError instanceof Error ? requestError.message : 'Unable to load product details.',
+        );
       })
       .finally(() => {
         if (active) setIsLoading(false);

@@ -1,9 +1,14 @@
 {
   "name": "pcforge",
   "private": true,
+  "scripts": {
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
   "workspaces": [
     "client",
-    "server"
+    "server",
+    "shared"
   ]
 }
-    

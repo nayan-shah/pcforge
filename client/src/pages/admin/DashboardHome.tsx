@@ -12,9 +12,27 @@ const overviewCards = [
 
 const featuredComponents = [
   { title: 'NVIDIA RTX 4090', category: 'GPU', price: '₹1,54,999', status: 'In stock', image: '' },
-  { title: 'Intel Core i9-14900K', category: 'CPU', price: '₹46,999', status: 'In stock', image: '' },
-  { title: 'Corsair Vengeance 32GB', category: 'RAM', price: '₹9,999', status: 'Low stock', image: '' },
-  { title: 'ASUS ROG Strix Z790', category: 'Motherboard', price: '₹39,999', status: 'In stock', image: '' },
+  {
+    title: 'Intel Core i9-14900K',
+    category: 'CPU',
+    price: '₹46,999',
+    status: 'In stock',
+    image: '',
+  },
+  {
+    title: 'Corsair Vengeance 32GB',
+    category: 'RAM',
+    price: '₹9,999',
+    status: 'Low stock',
+    image: '',
+  },
+  {
+    title: 'ASUS ROG Strix Z790',
+    category: 'Motherboard',
+    price: '₹39,999',
+    status: 'In stock',
+    image: '',
+  },
 ];
 
 export default function DashboardHome() {
@@ -27,10 +45,19 @@ export default function DashboardHome() {
 
         <section className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {overviewCards.map((card) => (
-            <article key={card.label} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/20">
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">{card.label}</p>
-              <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">{card.value}</p>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{card.change} vs last week</p>
+            <article
+              key={card.label}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-900/5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:shadow-black/20"
+            >
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-slate-500 dark:text-slate-400">
+                {card.label}
+              </p>
+              <p className="mt-4 text-3xl font-semibold text-slate-900 dark:text-slate-100">
+                {card.value}
+              </p>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                {card.change} vs last week
+              </p>
             </article>
           ))}
         </section>

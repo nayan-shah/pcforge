@@ -138,7 +138,14 @@ export default function Login() {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
                   <path
                     className="opacity-75"
                     fill="currentColor"
@@ -154,7 +161,10 @@ export default function Login() {
 
         <div className="text-center text-sm text-slate-600 mt-4">
           Don't have an account?{' '}
-          <Link to="/register" className="font-semibold text-violet-600 hover:text-violet-700 transition">
+          <Link
+            to="/register"
+            className="font-semibold text-violet-600 hover:text-violet-700 transition"
+          >
             Sign Up
           </Link>
         </div>

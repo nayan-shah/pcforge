@@ -6,7 +6,13 @@ interface ComponentCardProps {
   image?: string;
 }
 
-export default function ComponentCard({ title, category, price, status, image }: ComponentCardProps) {
+export default function ComponentCard({
+  title,
+  category,
+  price,
+  status,
+  image,
+}: ComponentCardProps) {
   return (
     <article className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-900/5 transition hover:-translate-y-1 hover:shadow-md dark:border-slate-700 dark:bg-slate-950 dark:shadow-black/20">
       <div className="bg-slate-100 p-6 dark:bg-slate-900">

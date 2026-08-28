@@ -4,7 +4,11 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export default function SearchBar({ value, onChange, placeholder = 'Search components...' }: SearchBarProps) {
+export default function SearchBar({
+  value,
+  onChange,
+  placeholder = 'Search components...',
+}: SearchBarProps) {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white px-4 py-3 shadow-sm focus-within:border-slate-400">
       <label htmlFor="component-search" className="sr-only">

@@ -5,7 +5,6 @@ interface BuilderContextType {
   selections: BuilderSelections;
   selectedComponents: SelectedComponent[];
   setSelection: (category: keyof BuilderSelections, option: BuilderOption | null) => void;
-  updateSelection: (category: keyof BuilderSelections, option: BuilderOption | null) => void;
   removeSelection: (category: keyof BuilderSelections) => void;
   clearBuild: () => void;
   totalPrice: number;
@@ -54,10 +53,6 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setSelections((prev) => ({ ...prev, [category]: option }));
   };
 
-  const updateSelection = (category: keyof BuilderSelections, option: BuilderOption | null) => {
-    setSelections((prev) => ({ ...prev, [category]: option }));
-  };
-
   const removeSelection = (category: keyof BuilderSelections) => {
     setSelections((prev) => ({ ...prev, [category]: null }));
   };
@@ -74,11 +69,17 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
   }, [selections]);
 
   const totalPrice = useMemo(() => {
-    return selectedComponents.reduce((sum, component) => sum + Number(component.option?.price ?? 0), 0);
+    return selectedComponents.reduce(
+      (sum, component) => sum + Number(component.option?.price ?? 0),
+      0,
+    );
   }, [selectedComponents]);
 
   const totalPower = useMemo(() => {
-    return selectedComponents.reduce((sum, component) => sum + Number(component.option?.powerWatts ?? 0), 0);
+    return selectedComponents.reduce(
+      (sum, component) => sum + Number(component.option?.powerWatts ?? 0),
+      0,
+    );
   }, [selectedComponents]);
 
   return (
@@ -87,7 +88,6 @@ export const BuilderProvider: React.FC<{ children: React.ReactNode }> = ({ child
         selections,
         selectedComponents,
         setSelection,
-        updateSelection,
         removeSelection,
         clearBuild,
         totalPrice,

@@ -22,7 +22,10 @@ export default function SpecificationsTable({ component }: SpecificationsTablePr
       </div>
       <div className="divide-y divide-slate-200 px-6 py-5">
         {specificationEntries.map(([key, value]) => (
-          <div key={key} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            key={key}
+            className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between"
+          >
             <span className="font-medium text-slate-700">{key}</span>
             <span className="text-slate-600">{String(value)}</span>
           </div>

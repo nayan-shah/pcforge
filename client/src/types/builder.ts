@@ -1,12 +1,5 @@
 export type ComponentCategory =
-  | 'CPU'
-  | 'GPU'
-  | 'RAM'
-  | 'Motherboard'
-  | 'PSU'
-  | 'Storage'
-  | 'Case'
-  | 'Cooler';
+  'CPU' | 'GPU' | 'RAM' | 'Motherboard' | 'PSU' | 'Storage' | 'Case' | 'Cooler';
 
 export interface BuilderOption {
   id: string;
@@ -17,6 +10,7 @@ export interface BuilderOption {
   description: string;
   category: ComponentCategory;
   compatibilityNotes: string[];
+  image: string;
 }
 
 export interface BuilderSelections {

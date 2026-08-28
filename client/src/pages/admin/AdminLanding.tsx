@@ -4,7 +4,10 @@ export default function AdminLanding() {
   return (
     <div className="rounded-3xl border border-slate-200 bg-white p-10 shadow-sm shadow-slate-900/5">
       <h1 className="text-3xl font-semibold tracking-tight text-slate-900">PCForge Admin</h1>
-      <p className="mt-4 text-slate-600">Welcome to the PCForge admin portal. Use the navigation panel to access dashboard tools and management pages.</p>
+      <p className="mt-4 text-slate-600">
+        Welcome to the PCForge admin portal. Use the navigation panel to access dashboard tools and
+        management pages.
+      </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <Link

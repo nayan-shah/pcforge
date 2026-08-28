@@ -39,7 +39,10 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
 
   // Tags: comma-separated string → individual FormData entries
   const tagsArray = data.tags
-    ? data.tags.split(',').map((t) => t.trim()).filter(Boolean)
+    ? data.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean)
     : [];
   tagsArray.forEach((tag) => fd.append('tags[]', tag));
 
@@ -47,19 +50,33 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   if (data.specifications && Object.keys(data.specifications).length > 0) {
     fd.append('specifications', JSON.stringify(data.specifications));
   }
-  fd.append('prices', JSON.stringify(data.prices.map((price) => ({
-    store: price.store || price.storeName || '',
-    storeName: price.storeName || price.store || '',
-    productUrl: price.productUrl,
-    price: Number(price.price ?? price.currentPrice ?? 0),
-    currentPrice: Number(price.currentPrice ?? price.price ?? 0),
-    inStock: typeof price.inStock === 'boolean'
-      ? price.inStock
-      : !String(price.availability ?? '').toLowerCase().includes('out of stock'),
-    availability: price.availability || (typeof price.inStock === 'boolean' ? (price.inStock ? 'Available' : 'Out of Stock') : 'Available'),
-    currency: price.currency ?? 'INR',
-    lastUpdated: new Date().toISOString(),
-  }))));
+  fd.append(
+    'prices',
+    JSON.stringify(
+      data.prices.map((price) => ({
+        store: price.store || price.storeName || '',
+        storeName: price.storeName || price.store || '',
+        productUrl: price.productUrl,
+        price: Number(price.price ?? price.currentPrice ?? 0),
+        currentPrice: Number(price.currentPrice ?? price.price ?? 0),
+        inStock:
+          typeof price.inStock === 'boolean'
+            ? price.inStock
+            : !String(price.availability ?? '')
+                .toLowerCase()
+                .includes('out of stock'),
+        availability:
+          price.availability ||
+          (typeof price.inStock === 'boolean'
+            ? price.inStock
+              ? 'Available'
+              : 'Out of Stock'
+            : 'Available'),
+        currency: price.currency ?? 'INR',
+        lastUpdated: new Date().toISOString(),
+      })),
+    ),
+  );
 
   // New image files selected by the user
   if (data.images && data.images.length > 0) {
@@ -88,7 +105,7 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   return fd;
 }
 
-// ── API Functions 
+// ── API Functions
 
 /**
  * Fetch a paginated, filtered, sorted list of components.
@@ -96,10 +113,7 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
 export async function getComponents(
   params: ComponentQueryParams = {},
 ): Promise<ComponentsResponse> {
-  const response = await apiClient.get<ApiResponse<ComponentsResponse>>(
-    '/components',
-    { params },
-  );
+  const response = await apiClient.get<ApiResponse<ComponentsResponse>>('/components', { params });
   return response.data.data;
 }
 
@@ -107,46 +121,33 @@ export async function getComponents(
  * Fetch randomly sampled components for the home page featured section.
  * Returns components that have images and prices where possible.
  */
-export async function getFeaturedComponents(
-  limit = 12,
-): Promise<ComponentDetail[]> {
-  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>(
-    '/components/featured',
-    { params: { limit } },
-  );
+export async function getFeaturedComponents(limit = 12): Promise<ComponentDetail[]> {
+  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>('/components/featured', {
+    params: { limit },
+  });
   return response.data.data;
 }
 
 /**
  * Fetch a single component by its Mongo ObjectId.
  */
-export async function getComponentById(
-  id: string,
-): Promise<ComponentDetail> {
-  const response = await apiClient.get<ApiResponse<ComponentDetail>>(
-    `/components/${id}`,
-  );
+export async function getComponentById(id: string): Promise<ComponentDetail> {
+  const response = await apiClient.get<ApiResponse<ComponentDetail>>(`/components/${id}`);
   return response.data.data;
 }
 
 /**
  * Fetch related components for a selected product.
  */
-export async function getComponentPrices(
-  id: string,
-): Promise<ComponentPriceComparisonResponse> {
+export async function getComponentPrices(id: string): Promise<ComponentPriceComparisonResponse> {
   const response = await apiClient.get<ApiResponse<ComponentPriceComparisonResponse>>(
     `/components/${id}/prices`,
   );
   return response.data.data;
 }
 
-export async function getRelatedComponents(
-  id: string,
-): Promise<ComponentDetail[]> {
-  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>(
-    `/components/${id}/related`,
-  );
+export async function getRelatedComponents(id: string): Promise<ComponentDetail[]> {
+  const response = await apiClient.get<ApiResponse<ComponentDetail[]>>(`/components/${id}/related`);
   return response.data.data;
 }
 
@@ -154,16 +155,12 @@ export async function getRelatedComponents(
  * Create a new component. Sends as FormData for image upload support.
  * The backend sets `createdBy` from the JWT — it must not be in the body.
  */
-export async function createComponent(
-  data: ComponentFormData,
-): Promise<ComponentDetail> {
+export async function createComponent(data: ComponentFormData): Promise<ComponentDetail> {
   const formData = buildFormData(data, false);
 
-  const response = await apiClient.post<ApiResponse<ComponentDetail>>(
-    '/components',
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } },
-  );
+  const response = await apiClient.post<ApiResponse<ComponentDetail>>('/components', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data.data;
 }
 

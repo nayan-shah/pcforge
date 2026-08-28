@@ -3,12 +3,7 @@ interface SortDropdownProps {
   onChange: (value: string) => void;
 }
 
-const options = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'priceLowToHigh', label: 'Price: Low to High' },
-  { value: 'priceHighToLow', label: 'Price: High to Low' },
-  { value: 'rating', label: 'Top rated' },
-];
+import { SORT_OPTIONS } from '../../constants/sort';
 
 export default function SortDropdown({ value, onChange }: SortDropdownProps) {
   return (
@@ -22,7 +17,7 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
         onChange={(event) => onChange(event.target.value)}
         className="w-full bg-transparent text-slate-900 outline-none"
       >
-        {options.map((option) => (
+        {SORT_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

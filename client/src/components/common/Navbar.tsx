@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 const links = [
   { label: 'Home', path: '/' },
   { label: 'Build PC', path: '/builder' },
-  { label: 'Compare Prices', path: '/compare' },
+  { label: 'Compare Prices', path: '/search' },
   { label: 'AI Assistant', path: '/ai' },
 ];
 
@@ -27,11 +27,10 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1536px] items-center justify-between gap-6 px-3 py-4 sm:px-4 lg:px-5">
-        
         {/* Left: Branding & Nav Links */}
         <div className="flex items-center gap-6">
-          <NavLink 
-            to="/" 
+          <NavLink
+            to="/"
             className="rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-base font-bold text-white shadow-md shadow-violet-500/10 tracking-tight"
           >
             PCForge
@@ -79,20 +78,24 @@ export default function Navbar() {
                   className="flex items-center gap-2 rounded-full border border-slate-200 bg-white p-1 pr-3 hover:bg-slate-50 transition shadow-sm hover:shadow cursor-pointer"
                 >
                   <img
-                    src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'}
+                    src={
+                      user.avatar ||
+                      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150&q=80'
+                    }
                     alt={user.name}
                     className="h-8 w-8 rounded-full object-cover border border-violet-100"
                   />
-                  <span className="text-xs font-semibold text-slate-700 max-w-[100px] truncate">{user.name}</span>
-                  <HiChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                  <span className="text-xs font-semibold text-slate-700 max-w-[100px] truncate">
+                    {user.name}
+                  </span>
+                  <HiChevronDown
+                    className={`h-4 w-4 text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 {isDropdownOpen && (
                   <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setIsDropdownOpen(false)}
-                    />
+                    <div className="fixed inset-0 z-10" onClick={() => setIsDropdownOpen(false)} />
                     <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-slate-100 bg-white p-2 shadow-lg shadow-slate-900/5 z-20">
                       <Link
                         to="/profile"
