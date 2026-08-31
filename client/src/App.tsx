@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom';
 import MainLayout from './components/layout/MainLayout';
 import AdminRoute from './components/admin/AdminRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import GuestRoute from './components/auth/GuestRoute';
 import AI from './pages/AI';
 import Builder from './pages/Builder';
 import Dashboard from './pages/Dashboard';
@@ -21,13 +23,58 @@ function App() {
     <Routes>
       <Route path="/" element={<MainLayout />}>
         <Route index element={<Home />} />
-        <Route path="login" element={<Login />} />
-        <Route path="register" element={<Register />} />
-        <Route path="builder" element={<Builder />} />
+
+        {/* Guest-only routes — redirect to home if already logged in */}
+        <Route
+          path="login"
+          element={
+            <GuestRoute>
+              <Login />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="register"
+          element={
+            <GuestRoute>
+              <Register />
+            </GuestRoute>
+          }
+        />
+
+        {/* Protected routes — redirect to login if not authenticated */}
+        <Route
+          path="builder"
+          element={
+            <ProtectedRoute>
+              <Builder />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Public routes */}
         <Route path="components/:id" element={<ProductDetails />} />
         <Route path="ai" element={<AI />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="profile" element={<Profile />} />
+        <Route path="components" element={<ComponentsPage />} />
+        <Route path="search" element={<SearchResults />} />
+
+        {/* Admin-only routes */}
         <Route
           path="admin"
           element={
@@ -52,8 +99,7 @@ function App() {
             </AdminRoute>
           }
         />
-        <Route path="components" element={<ComponentsPage />} />
-        <Route path="search" element={<SearchResults />} />
+
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

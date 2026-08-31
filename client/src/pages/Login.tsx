@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiMail, HiLockClosed } from 'react-icons/hi';
@@ -7,6 +7,7 @@ import { HiMail, HiLockClosed } from 'react-icons/hi';
 export default function Login() {
   const { login, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -42,7 +43,8 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate('/');
+      const redirectTo = searchParams.get('redirect') || '/';
+      navigate(redirectTo);
     } catch (err: any) {
       console.error('Login failed:', err);
     } finally {

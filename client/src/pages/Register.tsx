@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiUser, HiMail, HiLockClosed } from 'react-icons/hi';
@@ -7,6 +7,7 @@ import { HiUser, HiMail, HiLockClosed } from 'react-icons/hi';
 export default function Register() {
   const { register, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -52,7 +53,8 @@ export default function Register() {
     setIsSubmitting(true);
     try {
       await register(name, email, password, '');
-      navigate('/');
+      const redirectTo = searchParams.get('redirect') || '/';
+      navigate(redirectTo);
     } catch (err: any) {
       // AuthContext handles setting state error, caught locally for safety
       console.error('Registration failed:', err);

@@ -47,6 +47,16 @@ apiClient.interceptors.response.use(
     let message = 'An unexpected error occurred.';
 
     if (error.response) {
+      // Handle 401 — token expired or invalid. Auto-logout and redirect.
+      if (error.response.status === 401) {
+        const isOnLoginPage = window.location.pathname === '/login';
+        if (!isOnLoginPage) {
+          localStorage.removeItem('pcforge_token');
+          const redirectPath = window.location.pathname + window.location.search;
+          window.location.href = `/login?redirect=${encodeURIComponent(redirectPath)}`;
+        }
+      }
+
       // Server responded with a non-2xx status
       const serverMessage = error.response.data?.message;
       message = serverMessage || `Server error (${error.response.status})`;
@@ -61,5 +71,6 @@ apiClient.interceptors.response.use(
     return Promise.reject(new Error(message));
   },
 );
+
 
 export default apiClient;
