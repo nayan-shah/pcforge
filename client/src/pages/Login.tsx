@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiMail, HiLockClosed } from 'react-icons/hi';
+import { HiMail, HiLockClosed, HiEye, HiEyeOff } from 'react-icons/hi';
 
 export default function Login() {
   const { login, error: authError, clearError } = useAuth();
@@ -16,6 +16,7 @@ export default function Login() {
 
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -116,13 +117,21 @@ export default function Login() {
                 <HiLockClosed className="h-5 w-5 text-slate-400 mr-2 flex-shrink-0" />
                 <input
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
                   className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400 text-slate-800"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="ml-2 flex-shrink-0 text-slate-400 hover:text-violet-500 transition cursor-pointer"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <HiEyeOff className="h-5 w-5" /> : <HiEye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           </div>

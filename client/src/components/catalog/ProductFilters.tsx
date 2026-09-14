@@ -32,60 +32,61 @@ export default function ProductFilters({
   const hasActiveFilters = Boolean(category || brand);
 
   return (
-    <aside className="h-fit space-y-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 dark:border-slate-700 dark:bg-slate-900">
-      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
+    <aside className="h-fit space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-24">
+      <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Filters</h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Narrow down your results.
-          </p>
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            CATALOG FILTER
+          </span>
+          <h2 className="text-sm font-extrabold text-slate-950">Refine Parts</h2>
         </div>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={onClear}
-            className="text-sm font-semibold text-violet-600 transition hover:text-violet-500"
+            className="font-mono text-xs font-semibold text-slate-500 hover:text-slate-950 transition underline"
           >
             Clear all
           </button>
         )}
       </div>
 
-      <div className="space-y-5">
+      <div className="space-y-4">
         <div>
           <label
             htmlFor="category-filter"
-            className="mb-2 block text-sm font-medium text-slate-700"
+            className="mb-1.5 block text-xs font-bold text-slate-700"
           >
-            Category
+            Component Category
           </label>
           <select
             id="category-filter"
             value={category}
             onChange={(event) => onCategoryChange(event.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-violet-900/40"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900/10"
           >
             {categories.map((item) => (
               <option key={item} value={item === 'All' ? '' : item}>
-                {item}
+                {item === 'All' ? 'All Categories' : item}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label htmlFor="brand-filter" className="mb-2 block text-sm font-medium text-slate-700">
-            Brand
+          <label htmlFor="brand-filter" className="mb-1.5 block text-xs font-bold text-slate-700">
+            Manufacturer / Brand
           </label>
           <input
             id="brand-filter"
             value={brand}
             onChange={(event) => onBrandChange(event.target.value)}
-            placeholder="e.g. AMD, Corsair"
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-violet-900/40"
+            placeholder="e.g. AMD, Corsair, ASUS..."
+            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900/10"
           />
         </div>
       </div>
     </aside>
   );
+
 }

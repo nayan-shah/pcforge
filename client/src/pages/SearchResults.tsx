@@ -9,9 +9,11 @@ import {
   HiOutlineXCircle,
   HiOutlineClock,
   HiArrowTopRightOnSquare,
+  HiOutlineCpuChip,
 } from 'react-icons/hi2';
 import useRetailerSearch from '../hooks/useRetailerSearch';
-import type { RetailerOffer } from '../types/component';
+import type { RetailerOffer, ComponentDetail } from '../types/component';
+import ProductCard from '../components/catalog/ProductCard';
 
 import { COMPONENT_BRANDS, getComponentBrand } from '../constants/brands';
 import { STORE_COLORS } from '../constants/retailers';
@@ -50,14 +52,6 @@ function OfferCard({
           : 'border-slate-200 bg-white hover:border-slate-300'
       }`}
     >
-      {/* Rank badge */}
-      <div
-        className={`absolute -left-3 -top-3 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shadow ${
-          isCheapest ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600'
-        }`}
-      >
-        {rank}
-      </div>
 
       {/* Product image */}
       <div className="flex-shrink-0">
@@ -178,6 +172,31 @@ function ScrapingStatus() {
   );
 }
 
+/* -- Local database components section ----------------------------- */
+function LocalComponentsSection({ components }: { components: ComponentDetail[] }) {
+  if (!components || components.length === 0) return null;
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-5 py-4">
+        <HiOutlineCpuChip className="h-5 w-5 text-violet-600 flex-shrink-0" />
+        <div>
+          <p className="text-sm font-semibold text-violet-900">
+            {components.length} component{components.length !== 1 ? 's' : ''} found in catalog
+          </p>
+          <p className="text-xs text-violet-600 mt-0.5">
+            Matching products from the PCForge database
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {components.map((component) => (
+          <ProductCard key={component._id} component={component} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 interface SearchFiltersProps {
   excludedStores: string[];
   stores: string[];
@@ -206,22 +225,25 @@ function SearchFilters({
   onClear,
 }: SearchFiltersProps) {
   return (
-    <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:sticky md:top-6">
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+    <aside className="h-fit rounded-xl border border-slate-200 bg-white p-4 shadow-xs md:sticky md:top-24">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900">Filters</h2>
-          <p className="mt-1 text-sm text-slate-500">Refine price offers.</p>
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            PRICE FILTERS
+          </span>
+          <h2 className="text-sm font-extrabold text-slate-950">Refine Offers</h2>
         </div>
         {(excludedStores.length > 0 || componentBrand || minPrice || maxPrice) && (
           <button
             type="button"
             onClick={onClear}
-            className="text-sm font-semibold text-violet-600 hover:text-violet-500"
+            className="font-mono text-xs font-semibold text-slate-500 hover:text-slate-950 underline"
           >
             Clear
           </button>
         )}
       </div>
+
       <div className="space-y-5 pt-5">
         <fieldset>
           <legend className="mb-3 text-sm font-semibold text-slate-900">Component brand</legend>
@@ -360,40 +382,40 @@ export default function SearchResults() {
   };
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6">
       {/* -- Hero search bar -- */}
-      <header className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-violet-600">
-          Live Price Comparison
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
-          Find the Best Price
+      <header className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          PRICE ARBITRAGE ENGINE
+        </span>
+        <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">
+          Live Retailer Price Comparison
         </h1>
-        <p className="mt-1.5 text-slate-500 text-sm">
-          Real-time prices scraped from MDComputers, PrimeABGB, and Vedant.
+        <p className="mt-1 text-xs text-slate-500">
+          Real-time prices scraped continuously from MDComputers, PrimeABGB, and Vedant.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 flex gap-3">
-          <div className="relative flex flex-1 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-violet-400 focus-within:bg-white focus-within:ring-2 focus-within:ring-violet-500/10 transition">
-            <HiOutlineMagnifyingGlass className="mr-3 h-5 w-5 flex-shrink-0 text-slate-400" />
+        <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+          <div className="relative flex flex-1 items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs focus-within:border-slate-900 focus-within:bg-white focus-within:ring-1 focus-within:ring-slate-900/10 transition">
+            <HiOutlineMagnifyingGlass className="mr-2 h-4 w-4 flex-shrink-0 text-slate-400" />
             <input
               id="search-results-input"
               type="search"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="e.g. RTX 5070, Ryzen 9 9950X, DDR5 32GB..."
-              className="w-full bg-transparent text-slate-900 outline-none placeholder:text-slate-400"
+              placeholder="e.g. RTX 4070 Super, Ryzen 7 7800X3D, DDR5 32GB..."
+              className="w-full bg-transparent text-slate-900 outline-none placeholder:text-slate-400 text-xs"
             />
           </div>
           <button
             type="submit"
             disabled={isLoading || !inputValue.trim()}
-            className="inline-flex items-center gap-2 rounded-2xl bg-violet-600 px-5 py-3 text-sm font-semibold text-white shadow transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? (
-              <HiOutlineArrowPath className="h-4 w-4 animate-spin" />
+              <HiOutlineArrowPath className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <HiOutlineMagnifyingGlass className="h-4 w-4" />
+              <HiOutlineMagnifyingGlass className="h-3.5 w-3.5" />
             )}
             Search
           </button>
@@ -402,11 +424,11 @@ export default function SearchResults() {
 
       {/* -- No query yet -- */}
       {!queryParam && !isLoading && (
-        <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-16 text-center">
-          <HiOutlineMagnifyingGlass className="mx-auto h-12 w-12 text-slate-300" />
-          <h2 className="mt-4 text-lg font-semibold text-slate-700">Search for any PC component</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Type a product name above and hit Search to compare live prices across retailers.
+        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+          <HiOutlineMagnifyingGlass className="mx-auto h-10 w-10 text-slate-300" />
+          <h2 className="mt-3 text-sm font-bold text-slate-700">Search for any PC component</h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Type a product model above to compare live prices across Indian PC retailers.
           </p>
         </div>
       )}
@@ -415,7 +437,7 @@ export default function SearchResults() {
       {isLoading && (
         <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
           <SearchFilters {...filterProps} />
-          <div className="space-y-6">
+          <div className="space-y-4">
             <ScrapingStatus />
             <LoadingSkeleton />
           </div>
@@ -426,16 +448,16 @@ export default function SearchResults() {
       {!isLoading && error && (
         <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
           <SearchFilters {...filterProps} />
-          <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center">
-            <HiOutlineExclamationCircle className="mx-auto h-11 w-11 text-rose-400" />
-            <h2 className="mt-4 text-lg font-semibold text-rose-800">Could not fetch prices</h2>
-            <p className="mt-2 text-sm text-rose-600">{error}</p>
+          <div className="rounded-xl border border-rose-200 bg-rose-50 p-8 text-center">
+            <HiOutlineExclamationCircle className="mx-auto h-8 w-8 text-rose-500" />
+            <h2 className="mt-3 text-sm font-bold text-rose-800">Could not fetch prices</h2>
+            <p className="mt-1 text-xs text-rose-600">{error}</p>
             <button
               type="button"
               onClick={retry}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-lg bg-rose-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-rose-500 shadow-xs"
             >
-              <HiOutlineArrowPath className="h-4 w-4" />
+              <HiOutlineArrowPath className="h-3.5 w-3.5" />
               Retry
             </button>
           </div>
@@ -447,25 +469,24 @@ export default function SearchResults() {
         <div className="grid gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:items-start">
           <SearchFilters {...filterProps} />
 
-          <div className="space-y-6">
-            {/* Summary bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-2xs">
               <div>
-                <p className="text-sm font-semibold text-slate-900">
-                  {filteredOffers.length} offer{filteredOffers.length !== 1 ? 's' : ''} for{' '}
-                  <span className="text-violet-600">&ldquo;{data.query}&rdquo;</span>
+                <p className="text-xs font-semibold text-slate-900">
+                  {filteredOffers.length} retailer offer{filteredOffers.length !== 1 ? 's' : ''} for{' '}
+                  <span className="font-bold text-slate-950">&ldquo;{data.query}&rdquo;</span>
                   {filteredOffers.length !== data.totalOffers && (
-                    <span className="ml-2 text-slate-500 font-normal">
+                    <span className="ml-1.5 text-slate-500 font-normal">
                       (filtered from {data.totalOffers})
                     </span>
                   )}
                 </p>
               </div>
               {cheapestOffer && (
-                <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5">
-                  <HiOutlineCheckCircle className="h-4 w-4 text-emerald-600" />
-                  <span className="text-sm font-semibold text-emerald-800">
-                    Best price:{' '}
+                <div className="flex items-center gap-1.5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-mono">
+                  <HiOutlineCheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                  <span className="text-emerald-800">
+                    Best deal:{' '}
                     <span className="font-extrabold">
                       {formatPrice(cheapestOffer.price, cheapestOffer.currency)}
                     </span>{' '}
@@ -475,31 +496,34 @@ export default function SearchResults() {
               )}
             </div>
 
-            {/* No results */}
-            {filteredOffers.length === 0 && (
-              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-14 text-center">
-                <HiOutlineMagnifyingGlass className="mx-auto h-10 w-10 text-slate-300" />
-                <h2 className="mt-4 text-lg font-semibold text-slate-700">No results found</h2>
-                <p className="mt-2 text-sm text-slate-500">
-                  Try a broader search term, or adjust your filters.
+            {/* No results at all */}
+            {filteredOffers.length === 0 && (!data.localComponents || data.localComponents.length === 0) && (
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
+                <HiOutlineMagnifyingGlass className="mx-auto h-8 w-8 text-slate-300" />
+                <h2 className="mt-3 text-sm font-bold text-slate-700">No matching offers found</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Try searching for a simpler term like "4070" or "7800X3D", or clear your brand filter.
                 </p>
               </div>
             )}
 
+
             {/* Offer cards */}
-            <div className="space-y-4">
-              {filteredOffers.map((offer, index) => (
-                <OfferCard
-                  key={`${offer.storeName}-${offer.productUrl}-${index}`}
-                  offer={offer}
-                  isCheapest={
-                    cheapestOffer?.storeName === offer.storeName &&
-                    cheapestOffer?.productUrl === offer.productUrl
-                  }
-                  rank={index + 1}
-                />
-              ))}
-            </div>
+            {filteredOffers.length > 0 && (
+              <div className="space-y-4">
+                {filteredOffers.map((offer, index) => (
+                  <OfferCard
+                    key={`${offer.storeName}-${offer.productUrl}-${index}`}
+                    offer={offer}
+                    isCheapest={
+                      cheapestOffer?.storeName === offer.storeName &&
+                      cheapestOffer?.productUrl === offer.productUrl
+                    }
+                    rank={index + 1}
+                  />
+                ))}
+              </div>
+            )}
 
             {/* Browse catalog link */}
             <div className="rounded-2xl border border-violet-100 bg-violet-50 p-5 text-center">

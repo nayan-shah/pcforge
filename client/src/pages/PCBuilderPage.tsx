@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   HiCheckCircle,
   HiChevronRight,
   HiArrowTopRightOnSquare,
   HiOutlineShoppingCart,
+  HiOutlineXMark,
 } from 'react-icons/hi2';
 import { createBuild } from '../api/buildApi';
 import { getComponents } from '../api/componentApi';
@@ -18,6 +20,7 @@ import type {
 import type { ComponentDetail, PriceOffer } from '../types/component';
 import ComponentSelector from '../components/builder/ComponentSelector';
 import BuildSummary from '../components/builder/BuildSummary';
+import CategoryIcon from '../components/common/CategoryIcon';
 import { getLowestPrice } from '../utils/price';
 import { formatPrice } from '../utils/formatters';
 
@@ -148,10 +151,10 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
 
   if (offers.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center">
         <HiOutlineShoppingCart className="mx-auto h-8 w-8 text-slate-300" />
-        <p className="mt-3 text-sm font-semibold text-slate-600">No retailer offers found</p>
-        <p className="mt-1 text-xs text-slate-400">Prices will appear once scraped from retailers.</p>
+        <p className="mt-3 text-xs font-semibold text-slate-600">No retailer offers found</p>
+        <p className="mt-1 text-[11px] text-slate-400">Prices will appear once scraped from retailers.</p>
       </div>
     );
   }
@@ -159,18 +162,18 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
   const cheapestPrice = offers[0].sortPrice;
 
   return (
-    <div className="space-y-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
       <div className="flex flex-col gap-1 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
-            Price Comparison
+          <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            LIVE MARKET OFFERS
           </p>
-          <h3 className="mt-1 text-sm font-semibold text-slate-900 line-clamp-1">
+          <h3 className="mt-1 text-sm font-bold text-slate-950 line-clamp-1">
             {component.name}
           </h3>
         </div>
-        <span className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-          {offers.length} store{offers.length !== 1 ? 's' : ''} available
+        <span className="font-mono text-[10px] font-bold rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-emerald-700">
+          {offers.length} STORE{offers.length !== 1 ? 'S' : ''} TRACKED
         </span>
       </div>
 
@@ -181,28 +184,24 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
           return (
             <div
               key={`${offer.storeName}-${offer.productUrl}-${index}`}
-              className={`flex items-center gap-4 rounded-2xl border p-4 transition-all ${
+              className={`flex items-center gap-4 rounded-xl border p-3.5 transition-all ${
                 isCheapest
-                  ? 'border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50'
-                  : 'border-slate-100 bg-white hover:border-slate-200 hover:bg-slate-50'
+                  ? 'border-emerald-300 bg-emerald-50/40 shadow-xs'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
-              {/* Rank */}
-              <div
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                  isCheapest
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-slate-100 text-slate-500'
-                }`}
-              >
-                {index + 1}
-              </div>
-
               {/* Store + Availability */}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900">{offer.storeName}</p>
-                <p className={`text-xs ${
-                  isAvailable ? 'text-emerald-600' : 'text-rose-500'
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-slate-900">{offer.storeName}</p>
+                  {isCheapest && (
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded">
+                      CHEAPEST
+                    </span>
+                  )}
+                </div>
+                <p className={`text-[11px] font-medium mt-0.5 ${
+                  isAvailable ? 'text-emerald-700' : 'text-rose-500'
                 }`}>
                   {isAvailable ? (offer.availability || 'In Stock') : 'Out of Stock'}
                 </p>
@@ -210,8 +209,8 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
 
               {/* Price */}
               <p
-                className={`text-base font-bold tabular-nums ${
-                  isCheapest ? 'text-emerald-700' : 'text-slate-900'
+                className={`font-mono text-sm font-extrabold tabular-nums ${
+                  isCheapest ? 'text-emerald-800' : 'text-slate-950'
                 }`}
               >
                 {formatPrice(offer.sortPrice, offer.currency ?? 'INR')}
@@ -224,10 +223,10 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
                   target="_blank"
                   rel="noreferrer noopener"
                   onClick={(e) => e.stopPropagation()}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition active:scale-95 ${
+                  className={`inline-flex shrink-0 items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition active:scale-95 ${
                     isCheapest
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm shadow-emerald-200'
-                      : 'bg-slate-900 text-white hover:bg-slate-700'
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-xs'
+                      : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
                 >
                   Buy
@@ -240,9 +239,12 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
       </div>
 
       {cheapestPrice < Infinity && (
-        <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-2">
-          <span className="text-xs font-semibold text-emerald-800">
-            🏆 Best price: {formatPrice(cheapestPrice, offers[0].currency ?? 'INR')} at {offers[0].storeName}
+        <div className="flex items-center justify-between rounded-lg bg-emerald-50 border border-emerald-200 px-3.5 py-2 text-xs font-mono">
+          <span className="text-emerald-800 font-medium">
+            Best live offer: {offers[0].storeName}
+          </span>
+          <span className="font-bold text-emerald-900">
+            {formatPrice(cheapestPrice, offers[0].currency ?? 'INR')}
           </span>
         </div>
       )}
@@ -250,9 +252,10 @@ function PriceComparisonPanel({ component }: { component: ComponentDetail }) {
   );
 }
 
+
 export default function PCBuilderPage() {
   const { isAuthenticated, user } = useAuth();
-  const { selections, selectedComponents, setSelection, clearBuild, totalPrice, totalPower } =
+  const { selections, selectedComponents, setSelection, removeSelection, clearBuild, totalPrice, totalPower } =
     useBuilder();
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const [availableOptions, setAvailableOptions] = useState<BuilderOption[]>([]);
@@ -359,8 +362,10 @@ export default function PCBuilderPage() {
     }
   }
 
+  const navigate = useNavigate();
+
   function handleAskAI() {
-    alert('Ask AI is a UI-only feature.');
+    navigate('/ai');
   }
 
   const completedCategories = useMemo(() => {
@@ -377,58 +382,107 @@ export default function PCBuilderPage() {
   }, [selections]);
 
   return (
-    <section className="space-y-8">
-      <div className="grid gap-8 lg:grid-cols-[300px_1fr]">
-        <div className="space-y-6">
-          <aside className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 dark:border-slate-700 dark:bg-slate-900">
-            <div className="border-b border-slate-100 pb-4 dark:border-slate-800">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
-                PC Builder
-              </p>
-              <h2 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">
-                Required components
+    <section className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div>
+          <aside className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-24">
+            <div className="border-b border-slate-100 pb-3">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                CONFIGURATOR STAGES
+              </span>
+              <h2 className="mt-0.5 text-base font-extrabold text-slate-950 tracking-tight">
+                Required Parts
               </h2>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-300">
-                Choose every core part for a complete PC.
-              </p>
             </div>
 
-            <div className="mt-4 space-y-1">
+            <div className="mt-3 space-y-1.5">
               {buildSteps.map((step, index) => {
-                const isSelected = completedCategories[step.category];
+                const stepKey = selectionKeyMap[step.category];
+                const chosen = selections[stepKey];
+                const isSelected = Boolean(chosen);
                 const isActive = index === activeStepIndex;
 
                 return (
-                  <button
+                  <div
                     key={step.category}
-                    type="button"
                     onClick={() => handleSelectStep(index)}
-                    className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition ${
+                    className={`group relative flex flex-col rounded-lg p-2.5 transition cursor-pointer border ${
                       isActive
-                        ? 'bg-violet-50 text-violet-900 ring-1 ring-violet-200 dark:bg-violet-950/40 dark:text-violet-100 dark:ring-violet-800'
-                        : 'text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        : isSelected
+                        ? 'bg-emerald-50/60 border-emerald-200/80 text-slate-900 hover:bg-emerald-50'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                     }`}
                   >
-                    {isSelected ? (
-                      <HiCheckCircle
-                        className="h-5 w-5 shrink-0 text-emerald-500"
-                        aria-label="Selected"
-                      />
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border ${
+                            isActive
+                              ? 'border-slate-700 bg-slate-800 text-cyan-400'
+                              : isSelected
+                              ? 'border-emerald-200 bg-emerald-100 text-emerald-700'
+                              : 'border-slate-200 bg-slate-100 text-slate-400'
+                          }`}
+                        >
+                          <CategoryIcon category={step.category} className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-xs font-bold leading-tight truncate">
+                          {step.category}
+                        </span>
+                      </div>
+
+                      {isSelected && (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="font-mono text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1 py-0.2 rounded">
+                            PICKED
+                          </span>
+                          <button
+                            type="button"
+                            title={`Clear ${step.category}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSelection(stepKey);
+                            }}
+                            className={`rounded p-0.5 text-xs transition hover:bg-rose-100 hover:text-rose-600 ${
+                              isActive ? 'text-slate-400' : 'text-slate-400'
+                            }`}
+                          >
+                            <HiOutlineXMark className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {chosen ? (
+                      <div className="mt-1.5 pl-8 text-left">
+                        <p
+                          className={`text-[11px] font-semibold leading-tight line-clamp-1 ${
+                            isActive ? 'text-slate-200' : 'text-slate-800'
+                          }`}
+                        >
+                          {chosen.name}
+                        </p>
+                        <p
+                          className={`font-mono text-[10px] font-bold mt-0.5 ${
+                            isActive ? 'text-cyan-400' : 'text-emerald-700'
+                          }`}
+                        >
+                          {formatPrice(chosen.price)}
+                        </p>
+                      </div>
                     ) : (
-                      <span
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${isActive ? 'border-violet-500 text-violet-600' : 'border-slate-300 text-slate-400 dark:border-slate-600'}`}
-                      >
-                        {index + 1}
-                      </span>
+                      <div className="mt-0.5 pl-8 text-left">
+                        <span
+                          className={`text-[10px] ${
+                            isActive ? 'text-slate-400' : 'text-slate-400'
+                          }`}
+                        >
+                          Pending selection...
+                        </span>
+                      </div>
                     )}
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold">{step.category}</span>
-                      <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
-                        {isSelected ? 'Component selected' : 'Required'}
-                      </span>
-                    </span>
-                    <HiChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -458,3 +512,4 @@ export default function PCBuilderPage() {
     </section>
   );
 }
+

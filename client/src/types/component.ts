@@ -121,4 +121,6 @@ export interface RetailerSearchResponse {
   totalOffers: number;
   cheapestOffer: RetailerOffer | null;
   offers: RetailerOffer[];
+  localComponents: ComponentDetail[];
+  localComponentCount: number;
 }
