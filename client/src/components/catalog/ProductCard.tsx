@@ -26,14 +26,14 @@ export default function ProductCard({ component }: ProductCardProps) {
   return (
     <Link
       to={`/components/${component._id}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-900"
+      className="group flex flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-card-hover focus:outline-none focus:ring-2 focus:ring-slate-900"
     >
-      <div className="relative flex h-48 items-center justify-center bg-slate-50 p-4 border-b border-slate-100">
+      <div className="relative flex h-48 items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100/50 p-4 border-b border-slate-100 overflow-hidden">
         {component.images && component.images[0] ? (
           <img
             src={component.images[0]}
             alt={component.name}
-            className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
           <div className="flex flex-col items-center justify-center text-slate-300">
@@ -45,7 +45,7 @@ export default function ProductCard({ component }: ProductCardProps) {
         )}
 
         {offerCount > 0 && (
-          <span className="absolute top-2.5 right-2.5 rounded-md bg-white/95 border border-slate-200 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-700 shadow-2xs">
+          <span className="absolute top-2.5 right-2.5 rounded-lg bg-white/90 backdrop-blur-sm border border-slate-200/80 px-2 py-0.5 font-mono text-[10px] font-semibold text-slate-700 shadow-sm">
             {offerCount} store{offerCount !== 1 ? 's' : ''}
           </span>
         )}
@@ -54,12 +54,12 @@ export default function ProductCard({ component }: ProductCardProps) {
       <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
         <div>
           <div className="flex items-center gap-1.5">
-            <span className="rounded bg-slate-100 border border-slate-200 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-slate-700">
+            <span className="rounded-md bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-slate-700">
               {component.category}
             </span>
             <span className="text-[11px] font-semibold text-slate-500">{component.brand}</span>
           </div>
-          <h3 className="mt-2 line-clamp-2 text-xs font-bold text-slate-900 leading-snug group-hover:text-slate-950">
+          <h3 className="mt-2 line-clamp-2 text-sm font-bold text-slate-900 leading-snug group-hover:text-slate-950">
             {component.name}
           </h3>
         </div>
@@ -71,7 +71,7 @@ export default function ProductCard({ component }: ProductCardProps) {
               {lowestOffer ? formatPrice(lowestPrice, lowestCurrency) : 'Price unavailable'}
             </p>
           </div>
-          <span className="inline-flex items-center rounded-md bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white transition group-hover:bg-slate-800">
+          <span className="inline-flex items-center rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white transition-all duration-200 group-hover:bg-slate-800 group-hover:shadow-sm">
             View Details
           </span>
         </div>
@@ -79,4 +79,3 @@ export default function ProductCard({ component }: ProductCardProps) {
     </Link>
   );
 }
-

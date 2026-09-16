@@ -23,8 +23,9 @@ export default function ProductDetails() {
   if (isLoading) {
     return (
       <section className="space-y-6">
-        <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
-          Loading product details...
+        <div className="rounded-xl border border-slate-200/80 bg-white p-10 text-center shadow-card">
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
+          <p className="text-sm text-slate-500 font-medium">Loading product details...</p>
         </div>
       </section>
     );
@@ -33,7 +34,7 @@ export default function ProductDetails() {
   if (error) {
     return (
       <section className="space-y-6">
-        <div className="rounded-3xl border border-rose-200 bg-rose-50 p-10 text-center">
+        <div className="rounded-xl border border-rose-200/80 bg-rose-50 p-10 text-center">
           <HiOutlineExclamationCircle className="mx-auto h-11 w-11 text-rose-500" />
           <h2 className="mt-4 text-lg font-semibold text-rose-800">
             Unable to load product details
@@ -62,9 +63,9 @@ export default function ProductDetails() {
     <section className="space-y-8">
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card">
             <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-              <div className="rounded-3xl bg-slate-100 p-6">
+              <div className="rounded-xl bg-gradient-to-b from-slate-50 to-slate-100/50 p-6 border border-slate-100">
                 <img
                   src={currentImage}
                   alt={data.name}
@@ -77,10 +78,10 @@ export default function ProductDetails() {
                     key={`${image}-${index}`}
                     type="button"
                     onClick={() => setSelectedImage(image)}
-                    className={`overflow-hidden rounded-3xl border p-2 transition ${
+                    className={`overflow-hidden rounded-xl border p-2 transition-all duration-200 ${
                       currentImage === image
-                        ? 'border-violet-500 bg-violet-50'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
+                        ? 'border-slate-900 bg-slate-50 shadow-sm ring-2 ring-slate-900/10'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
                     }`}
                   >
                     <img

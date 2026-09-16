@@ -32,7 +32,7 @@ export default function ProductFilters({
   const hasActiveFilters = Boolean(category || brand);
 
   return (
-    <aside className="h-fit space-y-5 rounded-xl border border-slate-200 bg-white p-4 shadow-xs lg:sticky lg:top-24">
+    <aside className="h-fit space-y-5 rounded-xl border border-slate-200/80 bg-white p-5 shadow-card lg:sticky lg:top-24">
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
         <div>
           <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
@@ -44,7 +44,7 @@ export default function ProductFilters({
           <button
             type="button"
             onClick={onClear}
-            className="font-mono text-xs font-semibold text-slate-500 hover:text-slate-950 transition underline"
+            className="font-mono text-xs font-semibold text-slate-500 hover:text-slate-950 transition-colors underline"
           >
             Clear all
           </button>
@@ -63,7 +63,7 @@ export default function ProductFilters({
             id="category-filter"
             value={category}
             onChange={(event) => onCategoryChange(event.target.value)}
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900/10"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition-all duration-200 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900/5"
           >
             {categories.map((item) => (
               <option key={item} value={item === 'All' ? '' : item}>
@@ -82,7 +82,7 @@ export default function ProductFilters({
             value={brand}
             onChange={(event) => onBrandChange(event.target.value)}
             placeholder="e.g. AMD, Corsair, ASUS..."
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-1 focus:ring-slate-900/10"
+            className="w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-sm text-slate-900 outline-none transition-all duration-200 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-900/5"
           />
         </div>
       </div>

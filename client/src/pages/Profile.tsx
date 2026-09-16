@@ -106,10 +106,11 @@ export default function Profile() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+        className="relative overflow-hidden rounded-xl border border-slate-200/80 bg-white p-6 shadow-card sm:p-8"
       >
-        <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-violet-50/50 blur-2xl" />
-        <div className="absolute bottom-0 left-1/3 h-24 w-24 rounded-full bg-indigo-50/40 blur-2xl" />
+        {/* Ambient background */}
+        <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 -translate-y-8 rounded-full bg-cyan-50/30 blur-2xl" />
+        <div className="absolute bottom-0 left-1/3 h-24 w-24 rounded-full bg-slate-100/30 blur-2xl" />
 
         <div className="relative flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           {isEditing ? (
@@ -120,14 +121,14 @@ export default function Profile() {
                   '/default-avatar.jpg'
                 }
                 alt={editName}
-                className="h-24 w-24 rounded-3xl object-cover border-2 border-violet-100 shadow-md shadow-violet-500/5 flex-shrink-0"
+                className="h-24 w-24 rounded-xl object-cover border-2 border-slate-200 shadow-soft flex-shrink-0"
               />
               <input
                 type="text"
                 value={editAvatar}
                 onChange={(e) => setEditAvatar(e.target.value)}
                 placeholder="Avatar URL (optional)"
-                className="w-full max-w-[220px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/10 transition"
+                className="w-full max-w-[220px] rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-1.5 text-xs text-slate-700 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/5 transition-all"
               />
             </div>
           ) : (
@@ -137,7 +138,7 @@ export default function Profile() {
                 '/default-avatar.jpg'
               }
               alt={user.name}
-              className="h-24 w-24 rounded-3xl object-cover border-2 border-violet-100 shadow-md shadow-violet-500/5 flex-shrink-0"
+              className="h-24 w-24 rounded-xl object-cover border-2 border-slate-200 shadow-soft flex-shrink-0"
             />
           )}
 
@@ -148,24 +149,24 @@ export default function Profile() {
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="text-2xl font-extrabold tracking-tight text-slate-900 bg-transparent border-b-2 border-violet-400 outline-none px-1 py-0.5 w-full max-w-xs"
+                  className="text-2xl font-extrabold tracking-tight text-slate-900 bg-transparent border-b-2 border-slate-400 outline-none px-1 py-0.5 w-full max-w-xs"
                   autoFocus
                 />
               ) : (
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{user.name}</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">{user.name}</h1>
               )}
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider ${
                   user.role === 'admin'
-                    ? 'bg-indigo-50 text-indigo-700 border border-indigo-150'
-                    : 'bg-slate-100 text-slate-700 border border-slate-200'
+                    ? 'bg-slate-100 text-slate-700 border border-slate-200'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200'
                 }`}
               >
                 <HiShieldCheck className="h-3.5 w-3.5" />
                 {user.role}
               </span>
             </div>
-            <p className="flex items-center justify-center sm:justify-start gap-1.5 text-slate-600 text-sm">
+            <p className="flex items-center justify-center sm:justify-start gap-1.5 text-slate-500 text-sm">
               <HiMail className="h-4 w-4 text-slate-400" />
               {user.email}
             </p>
@@ -181,14 +182,14 @@ export default function Profile() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={profileSaving}
-                  className="flex items-center gap-1.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-violet-700 hover:to-indigo-700 transition disabled:opacity-70 cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-slate-700 hover:to-slate-800 transition-all disabled:opacity-70 cursor-pointer"
                 >
                   <HiCheck className="h-4 w-4" />
                   {profileSaving ? 'Saving…' : 'Save'}
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                 >
                   <HiX className="h-4 w-4" />
                   Cancel
@@ -198,14 +199,14 @@ export default function Profile() {
               <div className="flex gap-2">
                 <button
                   onClick={handleStartEdit}
-                  className="flex items-center gap-2 rounded-2xl border border-violet-100 hover:border-violet-200 bg-violet-50/30 hover:bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-600 transition shadow-sm hover:shadow cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition-all shadow-sm cursor-pointer"
                 >
                   <HiPencil className="h-4 w-4" />
                   Edit Profile
                 </button>
                 <button
                   onClick={logout}
-                  className="flex items-center gap-2 rounded-2xl border border-rose-100 hover:border-rose-200 bg-rose-50/30 hover:bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition shadow-sm hover:shadow cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-rose-200 hover:border-rose-300 bg-rose-50/50 hover:bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-600 transition-all shadow-sm cursor-pointer"
                 >
                   <HiLogout className="h-4 w-4" />
                   Logout
@@ -222,10 +223,10 @@ export default function Profile() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className={`mt-4 rounded-2xl p-3 text-sm font-medium ${
+              className={`mt-4 rounded-xl p-3 text-sm font-medium ${
                 profileMsg.type === 'success'
-                  ? 'bg-emerald-50 border border-emerald-100 text-emerald-700'
-                  : 'bg-rose-50 border border-rose-100 text-rose-600'
+                  ? 'bg-emerald-50 border border-emerald-200/80 text-emerald-700'
+                  : 'bg-rose-50 border border-rose-200/80 text-rose-600'
               }`}
             >
               {profileMsg.text}
@@ -241,16 +242,16 @@ export default function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="md:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6"
+          className="md:col-span-2 rounded-xl border border-slate-200/80 bg-white p-6 shadow-card space-y-6"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <HiDatabase className="h-5 w-5 text-violet-500" />
+            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+              <HiDatabase className="h-5 w-5 text-slate-500" />
               Saved Custom Builds
             </h2>
             <Link
               to="/builder"
-              className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center gap-0.5 transition"
+              className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-0.5 transition-colors"
             >
               New Build <HiArrowRight className="h-3 w-3" />
             </Link>
@@ -262,7 +263,7 @@ export default function Profile() {
               {user.savedBuilds.map((buildId) => (
                 <div
                   key={buildId}
-                  className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50"
+                  className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50"
                 >
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">Saved PC Rig</p>
@@ -270,7 +271,7 @@ export default function Profile() {
                   </div>
                   <Link
                     to={`/builder?id=${buildId}`}
-                    className="rounded-xl bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition shadow-sm"
+                    className="rounded-lg bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-all shadow-sm"
                   >
                     Load Build
                   </Link>
@@ -278,7 +279,7 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-250 p-8 text-center text-slate-500">
+            <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-500">
               <p className="text-sm font-semibold">No saved PC configurations yet</p>
               <p className="mt-1 text-xs text-slate-400 max-w-xs mx-auto">
                 Use our PC Builder helper to configure components, estimate power usage, check
@@ -286,7 +287,7 @@ export default function Profile() {
               </p>
               <Link
                 to="/builder"
-                className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:text-violet-700 transition"
+                className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-cyan-600 transition-colors"
               >
                 Go to Builder <HiArrowRight className="h-3.5 w-3.5" />
               </Link>
@@ -299,7 +300,7 @@ export default function Profile() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-4"
+          className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card space-y-4"
         >
           <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
             Account Navigation
@@ -308,26 +309,26 @@ export default function Profile() {
           <div className="flex flex-col gap-2">
             <Link
               to="/builder"
-              className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition"
+              className="w-full text-left p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition-colors"
             >
               PC Builder Studio
             </Link>
             <Link
               to="/search"
-              className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition"
+              className="w-full text-left p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition-colors"
             >
               Compare Components
             </Link>
             <Link
               to="/ai"
-              className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition"
+              className="w-full text-left p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition-colors"
             >
               Ask AI Builder Assistant
             </Link>
             {user.role === 'admin' && (
               <Link
                 to="/admin"
-                className="w-full text-left p-3 rounded-2xl bg-violet-50/50 hover:bg-violet-50 text-violet-700 text-sm font-semibold transition"
+                className="w-full text-left p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors"
               >
                 Admin Control Room
               </Link>
@@ -344,7 +345,7 @@ export default function Profile() {
                 setNewPassword('');
                 setConfirmNewPassword('');
               }}
-              className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition flex items-center gap-2 cursor-pointer"
+              className="w-full text-left p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100 text-slate-700 hover:text-slate-900 text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer"
             >
               <HiLockClosed className="h-4 w-4 text-slate-400" />
               Change Password
@@ -367,7 +368,7 @@ export default function Profile() {
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/10 transition"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/5 transition-all"
                     placeholder="••••••••"
                     required
                   />
@@ -378,7 +379,7 @@ export default function Profile() {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/10 transition"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/5 transition-all"
                     placeholder="Min 8 characters"
                     required
                   />
@@ -389,7 +390,7 @@ export default function Profile() {
                     type="password"
                     value={confirmNewPassword}
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/10 transition"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-900/5 transition-all"
                     placeholder="••••••••"
                     required
                   />
@@ -401,10 +402,10 @@ export default function Profile() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className={`rounded-xl p-2.5 text-xs font-medium ${
+                      className={`rounded-lg p-2.5 text-xs font-medium ${
                         passwordMsg.type === 'success'
-                          ? 'bg-emerald-50 border border-emerald-100 text-emerald-700'
-                          : 'bg-rose-50 border border-rose-100 text-rose-600'
+                          ? 'bg-emerald-50 border border-emerald-200/80 text-emerald-700'
+                          : 'bg-rose-50 border border-rose-200/80 text-rose-600'
                       }`}
                     >
                       {passwordMsg.text}
@@ -415,7 +416,7 @@ export default function Profile() {
                 <button
                   type="submit"
                   disabled={passwordSaving}
-                  className="w-full rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:from-violet-700 hover:to-indigo-700 transition disabled:opacity-70 cursor-pointer"
+                  className="w-full rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:from-slate-700 hover:to-slate-800 transition-all disabled:opacity-70 cursor-pointer"
                 >
                   {passwordSaving ? 'Updating…' : 'Update Password'}
                 </button>

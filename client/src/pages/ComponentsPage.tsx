@@ -58,7 +58,7 @@ export default function ComponentsPage() {
 
   return (
     <section className="space-y-6">
-      <header className="rounded-xl border border-slate-200 bg-white p-6 shadow-xs">
+      <header className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card">
         <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-end">
           <div>
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">

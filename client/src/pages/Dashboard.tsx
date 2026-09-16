@@ -73,12 +73,12 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
+        className="rounded-xl border border-slate-200/80 bg-white p-8 shadow-card"
       >
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
-          Dashboard
+        <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500">
+          DASHBOARD
         </p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-slate-900">
+        <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">
           Welcome back, {user?.name ?? 'Builder'}
         </h1>
         <p className="mt-2 text-sm text-slate-500">
@@ -92,10 +92,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-slate-100 to-slate-50 text-slate-700 border border-slate-200/60">
               <HiDatabase className="h-5 w-5" />
             </div>
             <div>
@@ -109,10 +109,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 border border-emerald-200/60">
               <HiCurrencyRupee className="h-5 w-5" />
             </div>
             <div>
@@ -126,10 +126,10 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+          className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 border border-amber-200/60">
               <HiLightningBolt className="h-5 w-5" />
             </div>
             <div>
@@ -145,16 +145,16 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+        className="rounded-xl border border-slate-200/80 bg-white p-6 shadow-card"
       >
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-            <HiDatabase className="h-5 w-5 text-violet-500" />
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+            <HiDatabase className="h-5 w-5 text-slate-500" />
             Your Builds
           </h2>
           <Link
             to="/builder"
-            className="flex items-center gap-1 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:from-violet-700 hover:to-indigo-700 transition"
+            className="flex items-center gap-1 rounded-lg bg-gradient-to-r from-slate-800 to-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-slate-900/20 hover:from-slate-700 hover:to-slate-800 transition-all"
           >
             New Build <HiArrowRight className="h-3 w-3" />
           </Link>
@@ -162,14 +162,14 @@ export default function Dashboard() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-violet-600" />
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
           </div>
         ) : error ? (
-          <div className="rounded-2xl bg-rose-50 border border-rose-100 p-6 text-center mt-4">
+          <div className="rounded-xl bg-rose-50 border border-rose-200/80 p-6 text-center mt-4">
             <p className="text-sm font-semibold text-rose-600">{error}</p>
           </div>
         ) : builds.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-10 text-center mt-4">
+          <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center mt-4">
             <HiDatabase className="mx-auto h-10 w-10 text-slate-300" />
             <p className="mt-3 text-sm font-semibold text-slate-600">No builds yet</p>
             <p className="mt-1 text-xs text-slate-400 max-w-xs mx-auto">
@@ -177,7 +177,7 @@ export default function Dashboard() {
             </p>
             <Link
               to="/builder"
-              className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-violet-600 hover:text-violet-700 transition"
+              className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-slate-900 hover:text-cyan-600 transition-colors"
             >
               Go to Builder <HiArrowRight className="h-3.5 w-3.5" />
             </Link>
@@ -189,7 +189,7 @@ export default function Dashboard() {
                 key={build._id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-slate-50/50 p-5 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-5 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-slate-50"
               >
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold text-slate-900 truncate">{build.name}</h3>
@@ -206,13 +206,13 @@ export default function Dashboard() {
                     {build.components.slice(0, 4).map((comp) => (
                       <span
                         key={comp.componentId}
-                        className="inline-flex rounded-lg bg-white border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
+                        className="inline-flex rounded-md bg-white border border-slate-200/80 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
                       >
                         {comp.category}: {comp.brand}
                       </span>
                     ))}
                     {build.components.length > 4 && (
-                      <span className="inline-flex rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                      <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
                         +{build.components.length - 4} more
                       </span>
                     )}
@@ -223,7 +223,7 @@ export default function Dashboard() {
                   <button
                     onClick={() => handleDeleteBuild(build._id)}
                     disabled={deletingId === build._id}
-                    className="flex items-center gap-1 rounded-xl border border-rose-100 bg-rose-50/30 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1 rounded-lg border border-rose-200/80 bg-rose-50/50 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     <HiTrash className="h-3.5 w-3.5" />
                     {deletingId === build._id ? 'Deleting…' : 'Delete'}

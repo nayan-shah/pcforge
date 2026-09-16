@@ -34,19 +34,19 @@ function FeaturedCard({ component }: { component: ComponentDetail }) {
 
   return (
     <div
-      className="group flex flex-col rounded-xl border border-slate-200/90 bg-white shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-slate-400 hover:shadow-md cursor-pointer overflow-hidden"
+      className="group flex flex-col rounded-xl border border-slate-200/80 bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-card-hover cursor-pointer overflow-hidden"
       onClick={() => navigate(`/components/${component._id}`)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && navigate(`/components/${component._id}`)}
     >
       {/* Image Area */}
-      <div className="relative flex h-48 items-center justify-center bg-slate-50 p-4 border-b border-slate-100 overflow-hidden">
+      <div className="relative flex h-48 items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100/50 p-4 border-b border-slate-100 overflow-hidden">
         {component.images && component.images[0] ? (
           <img
             src={component.images[0]}
             alt={component.name}
-            className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
               el.style.display = 'none';
@@ -95,7 +95,7 @@ function FeaturedCard({ component }: { component: ComponentDetail }) {
             </span>
             <span className="text-[11px] font-semibold text-slate-500">{component.brand}</span>
           </div>
-          <h3 className="line-clamp-2 text-xs font-bold text-slate-900 leading-snug group-hover:text-slate-950">
+          <h3 className="line-clamp-2 text-sm font-bold text-slate-900 leading-snug group-hover:text-slate-950">
             {component.name}
           </h3>
         </div>
@@ -111,7 +111,7 @@ function FeaturedCard({ component }: { component: ComponentDetail }) {
               <p className="text-xs font-semibold text-slate-400 italic">Price N/A</p>
             )}
           </div>
-          <span className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-2.5 py-1.5 text-[10px] font-semibold text-white transition group-hover:bg-slate-800">
+          <span className="inline-flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-semibold text-white transition-all duration-200 group-hover:bg-slate-800 group-hover:shadow-sm">
             Compare <HiOutlineArrowRight className="h-3 w-3" />
           </span>
         </div>
@@ -128,19 +128,19 @@ function DealCard({ component }: { component: ComponentDetail }) {
 
   return (
     <div
-      className="group flex flex-col rounded-xl border border-slate-200/90 bg-white p-4 transition-all duration-200 hover:border-slate-400 hover:shadow-md cursor-pointer"
+      className="group flex flex-col rounded-xl border border-slate-200/80 bg-white p-4 shadow-card transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-card-hover cursor-pointer"
       onClick={() => navigate(`/components/${component._id}`)}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && navigate(`/components/${component._id}`)}
     >
       {/* Image area */}
-      <div className="h-36 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center p-3 mb-3 overflow-hidden">
+      <div className="h-36 bg-gradient-to-b from-slate-50 to-slate-100/50 rounded-lg border border-slate-100 flex items-center justify-center p-3 mb-3 overflow-hidden">
         {component.images && component.images[0] ? (
           <img
             src={component.images[0]}
             alt={component.name}
-            className="h-full w-full object-contain transition duration-300 group-hover:scale-105"
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
             onError={(e) => {
               (e.currentTarget as HTMLImageElement).style.display = 'none';
             }}
@@ -199,14 +199,14 @@ function GridSkeleton({ count, tall = false }: { count: number; tall?: boolean }
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="animate-pulse rounded-xl border border-slate-200 bg-white overflow-hidden"
+          className="rounded-xl border border-slate-200/80 bg-white overflow-hidden"
         >
-          <div className={`bg-slate-100 ${tall ? 'h-44' : 'h-36'}`} />
+          <div className={`skeleton-shimmer ${tall ? 'h-44' : 'h-36'}`} />
           <div className="p-4 space-y-2">
-            <div className="h-3 w-16 rounded bg-slate-200" />
-            <div className="h-4 w-3/4 rounded bg-slate-200" />
-            <div className="h-3 w-1/2 rounded bg-slate-100" />
-            <div className="mt-3 h-5 w-24 rounded bg-slate-200" />
+            <div className="h-3 w-16 rounded-md skeleton-shimmer" />
+            <div className="h-4 w-3/4 rounded-md skeleton-shimmer" />
+            <div className="h-3 w-1/2 rounded-md skeleton-shimmer" />
+            <div className="mt-3 h-5 w-24 rounded-md skeleton-shimmer" />
           </div>
         </div>
       ))}
@@ -277,6 +277,10 @@ export default function LandingPage() {
       <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 text-white shadow-xl">
         {/* Subtle Tech Grid Texture */}
         <div className="absolute inset-0 bg-tech-grid-dark opacity-30 pointer-events-none" />
+        {/* Ambient gradient orbs for depth */}
+        <div className="absolute -top-20 -left-20 h-72 w-72 rounded-full bg-cyan-500/8 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-16 -right-16 h-60 w-60 rounded-full bg-indigo-500/6 blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-40 w-80 rounded-full bg-cyan-400/4 blur-2xl pointer-events-none" />
 
         <div className="relative z-10 grid gap-10 lg:grid-cols-12 p-8 sm:p-12 lg:p-14 items-center">
           {/* Left: Value Proposition */}
@@ -302,14 +306,14 @@ export default function LandingPage() {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <button
                 onClick={() => navigate('/builder')}
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-xs font-bold text-slate-950 hover:bg-slate-100 shadow-md transition hover:scale-[1.02] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-bold text-slate-950 hover:bg-slate-100 shadow-md shadow-white/10 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <HiOutlineWrenchScrewdriver className="h-4 w-4" />
                 Launch Interactive PC Builder
               </button>
               <button
                 onClick={() => navigate('/components')}
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/80 px-5 py-3 text-xs font-bold text-slate-200 hover:bg-slate-800 hover:border-slate-600 transition"
+                className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/80 px-6 py-3 text-sm font-bold text-slate-200 hover:bg-slate-800 hover:border-slate-600 transition-all duration-200"
               >
                 Explore Hardware Catalog
                 <HiOutlineArrowRight className="h-3.5 w-3.5" />
@@ -332,7 +336,7 @@ export default function LandingPage() {
 
           {/* Right: Live Rig Telemetry Benchmark Card */}
           <div className="lg:col-span-5">
-            <div className="rounded-xl border border-slate-800 bg-slate-900/95 p-5 shadow-2xl space-y-4">
+            <div className="rounded-xl border border-slate-800 bg-slate-900/95 p-5 shadow-2xl space-y-4 glow-cyan">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-cyan-400" />
@@ -429,10 +433,10 @@ export default function LandingPage() {
                 const el = document.getElementById('shop-by-component');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className={`group flex flex-col items-center justify-center p-4 rounded-xl border transition-all cursor-pointer ${
+              className={`group flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-200 cursor-pointer ${
                 activeTab === cat.name
-                  ? 'border-slate-900 bg-slate-900 text-white shadow-sm'
-                  : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+                  ? 'border-slate-900 bg-slate-900 text-white shadow-md shadow-slate-900/20 scale-[1.02]'
+                  : 'border-slate-200/80 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:shadow-card hover:scale-[1.01]'
               }`}
             >
               <CategoryIcon
@@ -453,7 +457,7 @@ export default function LandingPage() {
       </section>
 
       {/* 3. Deals of the Day — LIVE DATA */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
+      <section className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-card space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-extrabold text-slate-950 tracking-tight">
@@ -510,7 +514,7 @@ export default function LandingPage() {
 
       {/* 4. Secondary Platform Banners */}
       <section className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-xl border border-slate-800 bg-slate-900 text-white p-6 sm:p-8 flex flex-col justify-between shadow-sm relative overflow-hidden">
+        <div className="rounded-xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6 sm:p-8 flex flex-col justify-between shadow-soft-lg relative overflow-hidden">
           <div className="space-y-3 relative z-10">
             <span className="inline-flex rounded-md bg-slate-800 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 border border-slate-700">
               SOCKET & CLEARANCE ENGINE
@@ -530,7 +534,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-6 sm:p-8 flex flex-col justify-between shadow-xs">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-6 sm:p-8 flex flex-col justify-between shadow-card hover:shadow-card-hover transition-shadow duration-300">
           <div className="space-y-3">
             <span className="inline-flex rounded-md bg-slate-100 px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider text-slate-700 border border-slate-200">
               AI ARCHITECT
@@ -552,7 +556,7 @@ export default function LandingPage() {
       </section>
 
       {/* 5. Shop by Component — LIVE DATA with Category Filter */}
-      <section id="shop-by-component" className="bg-white border border-slate-200 rounded-xl p-6 shadow-xs space-y-6">
+      <section id="shop-by-component" className="bg-white border border-slate-200/80 rounded-xl p-6 shadow-card space-y-6">
         <div className="border-b border-slate-100 pb-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="text-lg font-extrabold text-slate-950 tracking-tight">
@@ -617,8 +621,8 @@ export default function LandingPage() {
 
       {/* 6. Retailer Verification & Trust Grid */}
       <section className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex items-start gap-4">
-          <div className="p-2.5 bg-slate-100 text-slate-800 rounded-lg flex-shrink-0">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow duration-300 flex items-start gap-4">
+          <div className="p-2.5 bg-gradient-to-br from-slate-100 to-slate-50 text-slate-800 rounded-lg flex-shrink-0 border border-slate-200/50">
             <HiLightningBolt className="h-5 w-5" />
           </div>
           <div>
@@ -629,8 +633,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex items-start gap-4">
-          <div className="p-2.5 bg-slate-100 text-slate-800 rounded-lg flex-shrink-0">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow duration-300 flex items-start gap-4">
+          <div className="p-2.5 bg-gradient-to-br from-slate-100 to-slate-50 text-slate-800 rounded-lg flex-shrink-0 border border-slate-200/50">
             <HiShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -641,8 +645,8 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex items-start gap-4">
-          <div className="p-2.5 bg-slate-100 text-slate-800 rounded-lg flex-shrink-0">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-card hover:shadow-card-hover transition-shadow duration-300 flex items-start gap-4">
+          <div className="p-2.5 bg-gradient-to-br from-slate-100 to-slate-50 text-slate-800 rounded-lg flex-shrink-0 border border-slate-200/50">
             <HiTrendingUp className="h-5 w-5" />
           </div>
           <div>
