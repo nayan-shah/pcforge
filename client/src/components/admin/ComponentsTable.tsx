@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HiOutlinePencilSquare, HiOutlineTrash } from 'react-icons/hi2';
+import { HiOutlineEye, HiOutlinePencilSquare, HiOutlineTrash } from 'react-icons/hi2';
 import DataTable from '../common/DataTable';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import type { ComponentDetail } from '../../types/component';
@@ -9,7 +9,7 @@ import type { ComponentDetail } from '../../types/component';
  *
  * Purely presentational — all data and callbacks come from props.
  * Re-uses the generic DataTable component for consistent styling,
- * and adds thumbnail previews + Edit / Delete action buttons.
+ * and adds thumbnail previews + View / Edit / Delete action buttons.
  *
  * The delete action opens a proper confirmation modal rather than
  * using the browser's blocking window.confirm() dialog.
@@ -17,6 +17,7 @@ import type { ComponentDetail } from '../../types/component';
 
 interface ComponentsTableProps {
   components: ComponentDetail[];
+  onViewDetails: (component: ComponentDetail) => void;
   onEdit: (component: ComponentDetail) => void;
   /** Called with the component's _id after the user confirms deletion. */
   onDelete: (id: string) => Promise<void> | void;
@@ -27,7 +28,12 @@ interface PendingDelete {
   name: string;
 }
 
-export default function ComponentsTable({ components, onEdit, onDelete }: ComponentsTableProps) {
+export default function ComponentsTable({
+  components,
+  onViewDetails,
+  onEdit,
+  onDelete,
+}: ComponentsTableProps) {
   // Tracks which row the user has clicked Delete on
   const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -56,20 +62,27 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
     {
       header: 'Component',
       accessor: (item: ComponentDetail) => (
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onViewDetails(item)}
+          className="flex items-center gap-3 text-left group focus:outline-none"
+          title="Click to view component details"
+        >
           {item.images?.[0] ? (
             <img
               src={item.images[0]}
               alt={item.name}
-              className="h-10 w-10 rounded-xl border border-slate-200 object-cover dark:border-slate-700"
+              className="h-10 w-10 rounded-xl border border-slate-200 object-cover transition-transform group-hover:scale-105 dark:border-slate-700"
             />
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-lg text-slate-400 dark:bg-slate-800">
               📦
             </div>
           )}
-          <span className="font-medium text-slate-900 dark:text-slate-100">{item.name}</span>
-        </div>
+          <span className="font-medium text-slate-900 group-hover:text-cyan-600 transition-colors dark:text-slate-100 dark:group-hover:text-cyan-400">
+            {item.name}
+          </span>
+        </button>
       ),
     },
     {
@@ -81,7 +94,7 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
     {
       header: 'Category',
       accessor: (item: ComponentDetail) => (
-        <span className="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+        <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
           {item.category}
         </span>
       ),
@@ -122,6 +135,16 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
       accessor: (item: ComponentDetail) => (
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={() => onViewDetails(item)}
+            className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-800 shadow-xs transition hover:bg-slate-50 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+            title="View component details"
+          >
+            <HiOutlineEye className="h-3.5 w-3.5 text-slate-500" />
+            View
+          </button>
+          <button
+            type="button"
             onClick={() => onEdit(item)}
             className="inline-flex items-center gap-1 rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
           >
@@ -129,6 +152,7 @@ export default function ComponentsTable({ components, onEdit, onDelete }: Compon
             Edit
           </button>
           <button
+            type="button"
             onClick={() => handleDeleteClick(item._id, item.name)}
             className="inline-flex items-center gap-1 rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500"
           >

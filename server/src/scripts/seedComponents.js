@@ -27,6 +27,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import Component from '../models/Component.js';
 import User from '../models/User.js';
+import { resolveSpecifications } from '../utils/specs.js';
 import { scrapeVedantOffers } from '../services/scrapers/vedant/vedantService.js';
 import { scrapePrimeAbgbOffers } from '../services/scrapers/primeabgb/primeAbgbService.js';
 import { scrapePcStudioOffers } from '../services/scrapers/pcstudio/pcStudioService.js';
@@ -230,12 +231,20 @@ async function upsertComponents(groups, createdBy) {
         continue;
       }
 
+      const resolved = resolveSpecifications({
+        name: group.name,
+        brand: group.brand,
+        category: group.category,
+      });
+
       await Component.create({
         name: group.name,
         brand: group.brand,
         category: group.category,
-        description: '',
+        description: resolved.inferredDescription,
         images: group.image ? [group.image] : [],
+        specifications: resolved.flatSpecs,
+        compatibility: resolved.compatibility,
         prices: group.prices,
         stockStatus: group.prices.some((p) => p.inStock) ? 'In Stock' : 'Out of Stock',
         tags: [group.category.toLowerCase(), group.brand.toLowerCase()],

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import type { ComponentSummary } from '../../types/component';
 import CategoryIcon from '../common/CategoryIcon';
 import { formatPrice } from '../../utils/formatters';
+import { getKeySpecBadges } from '../../utils/specs';
 
 interface ProductCardProps {
   component: ComponentSummary;
@@ -22,6 +23,7 @@ export default function ProductCard({ component }: ProductCardProps) {
   const offerCount = component.prices.filter((offer) => offer.productUrl).length;
   const lowestPrice = lowestOffer ? (lowestOffer.price ?? lowestOffer.currentPrice ?? 0) : 0;
   const lowestCurrency = lowestOffer?.currency ?? 'INR';
+  const keyBadges = getKeySpecBadges(component);
 
   return (
     <Link
@@ -52,16 +54,31 @@ export default function ProductCard({ component }: ProductCardProps) {
       </div>
 
       <div className="flex flex-1 flex-col justify-between space-y-3 p-4">
-        <div>
+        <div className="space-y-2">
           <div className="flex items-center gap-1.5">
             <span className="rounded-md bg-slate-100 border border-slate-200/80 px-1.5 py-0.5 font-mono text-[10px] font-bold uppercase text-slate-700">
               {component.category}
             </span>
             <span className="text-[11px] font-semibold text-slate-500">{component.brand}</span>
           </div>
-          <h3 className="mt-2 line-clamp-2 text-sm font-bold text-slate-900 leading-snug group-hover:text-slate-950">
+          <h3 className="line-clamp-2 text-sm font-bold text-slate-900 leading-snug group-hover:text-slate-950">
             {component.name}
           </h3>
+
+          {/* Key Specifications Strip */}
+          {keyBadges.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {keyBadges.map((badge, idx) => (
+                <span
+                  key={idx}
+                  className="inline-flex items-center rounded-md bg-slate-50 border border-slate-200/90 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 font-medium"
+                >
+                  <span className="text-slate-400 mr-1">{badge.label}:</span>
+                  <span className="font-semibold text-slate-900">{badge.value}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-slate-100 pt-3 flex items-end justify-between gap-2">

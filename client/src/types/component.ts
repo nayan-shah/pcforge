@@ -40,6 +40,8 @@ export interface ComponentSummary {
   tags: string[];
   rating: number;
   prices: PriceOffer[];
+  specifications?: Record<string, unknown>;
+  compatibility?: Record<string, unknown>;
 }
 
 export interface ComponentDetail extends ComponentSummary {

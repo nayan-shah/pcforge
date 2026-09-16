@@ -23,6 +23,7 @@ import BuildSummary from '../components/builder/BuildSummary';
 import CategoryIcon from '../components/common/CategoryIcon';
 import { getLowestPrice } from '../utils/price';
 import { formatPrice } from '../utils/formatters';
+import { resolveSpecifications } from '../utils/specs';
 
 const buildSteps: BuildStep[] = [
   {
@@ -109,14 +110,9 @@ const toCompatibilityNotes = (component: ComponentDetail): string[] => {
 
 const mapComponentToBuilderOption = (component: ComponentDetail): BuilderOption => {
   const lowestPrice = getLowestPrice(component)?.price ?? 0;
+  const resolved = resolveSpecifications(component);
 
-  const powerFromSpecifications = Number(
-    component.specifications?.powerConsumption ??
-      component.specifications?.TDP ??
-      component.specifications?.maxPowerDraw ??
-      component.specifications?.power ??
-      0,
-  );
+  const powerWatts = resolved.powerWatts > 0 ? resolved.powerWatts : 0;
 
   const categoryMap: Record<string, ComponentCategory> = {
     CPU: 'CPU',
@@ -130,15 +126,18 @@ const mapComponentToBuilderOption = (component: ComponentDetail): BuilderOption 
     Cooler: 'Cooler',
   } as const;
 
+  const compNotes = toCompatibilityNotes(component);
+  const finalNotes = compNotes.length > 0 ? compNotes : resolved.compatibility.notes;
+
   return {
     id: component._id,
     name: component.name,
     brand: component.brand,
     price: Number.isFinite(lowestPrice) ? lowestPrice : 0,
-    powerWatts: Number.isFinite(powerFromSpecifications) ? powerFromSpecifications : 0,
-    description: component.description || 'No further details available.',
+    powerWatts,
+    description: component.description || resolved.inferredDescription,
     category: categoryMap[component.category] ?? 'CPU',
-    compatibilityNotes: toCompatibilityNotes(component),
+    compatibilityNotes: finalNotes,
     image: component.images?.[0] || '',
   };
 };

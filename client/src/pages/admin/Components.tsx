@@ -12,11 +12,12 @@ import {
 import AdminPageShell from '../../components/admin/AdminPageShell';
 import ComponentsTable from '../../components/admin/ComponentsTable';
 import ComponentForm from '../../components/admin/ComponentForm';
+import ComponentDetailsModal from '../../components/admin/ComponentDetailsModal';
 import LoadingState from '../../components/common/LoadingState';
 import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/catalog/Pagination';
 import useComponents from '../../hooks/useComponents';
-import type { ComponentFormData, Toast } from '../../types/component';
+import type { ComponentDetail, ComponentFormData, Toast } from '../../types/component';
 import { SORT_OPTIONS } from '../../constants/sort';
 
 // ── Constants ────────────────────────────────────────────────────────
@@ -85,6 +86,7 @@ export default function Components() {
   } = useComponents();
 
   const [showForm, setShowForm] = useState(false);
+  const [viewingComponent, setViewingComponent] = useState<ComponentDetail | null>(null);
 
   // ── Form handlers ───────────────────────────────────────────────
 
@@ -96,6 +98,19 @@ export default function Components() {
   const handleEdit = (component: (typeof components)[number]) => {
     setEditingComponent(component);
     setShowForm(true);
+  };
+
+  const handleViewDetails = (component: ComponentDetail) => {
+    setViewingComponent(component);
+  };
+
+  const handleCloseDetails = () => {
+    setViewingComponent(null);
+  };
+
+  const handleEditFromDetails = (component: ComponentDetail) => {
+    setViewingComponent(null);
+    handleEdit(component);
   };
 
   const handleCancel = () => {
@@ -237,6 +252,7 @@ export default function Components() {
           <>
             <ComponentsTable
               components={components}
+              onViewDetails={handleViewDetails}
               onEdit={handleEdit}
               onDelete={removeComponent}
             />
@@ -281,6 +297,13 @@ export default function Components() {
           })}
         </div>
       )}
+
+      {/* ── Component Details Modal ────────────────────────────── */}
+      <ComponentDetailsModal
+        component={viewingComponent}
+        onClose={handleCloseDetails}
+        onEdit={handleEditFromDetails}
+      />
     </AdminPageShell>
   );
 }

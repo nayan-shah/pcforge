@@ -3,7 +3,8 @@ import Component from '../../../models/Component.js';
 import { deleteCloudinaryImages, getUploadedImageUrls } from '../middleware/uploadMiddleware.js';
 import { ApiError, notFound } from '../../../utils/apiError.js';
 import { sendSuccess } from '../../../utils/apiResponse.js';
-import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../../../services/priceComparisonService.js';
+import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts, generateMultiStoreOffers } from '../../../services/priceComparisonService.js';
+import { resolveSpecifications } from '../../../utils/specs.js';
 
 const MAX_LIMIT = 100;
 const SORTS = {
@@ -28,7 +29,31 @@ const parsePositiveInteger = (value, defaultValue, maximum) => {
 
 const buildComponentPayload = (body, images) => {
   const fields = ['name', 'brand', 'category', 'description', 'stockStatus', 'tags', 'specifications', 'compatibility', 'prices', 'rating', 'reviewCount'];
-  return Object.fromEntries(fields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]).concat([['images', images]]));
+  const payload = Object.fromEntries(fields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]).concat([['images', images]]));
+  
+  // Auto-resolve specifications if missing or empty
+  if (payload.name && payload.category) {
+    const resolved = resolveSpecifications({
+      name: payload.name,
+      category: payload.category,
+      brand: payload.brand || '',
+      description: payload.description || '',
+      specifications: payload.specifications || {},
+      compatibility: payload.compatibility || {},
+    });
+
+    if (!payload.specifications || Object.keys(payload.specifications).length === 0) {
+      payload.specifications = resolved.flatSpecs;
+    }
+    if (!payload.compatibility || Object.keys(payload.compatibility).length === 0) {
+      payload.compatibility = resolved.compatibility;
+    }
+    if (!payload.description || payload.description.trim() === '') {
+      payload.description = resolved.inferredDescription;
+    }
+  }
+
+  return payload;
 };
 
 export const createComponent = async (req, res, next) => {
@@ -122,6 +147,10 @@ export const getComponentById = async (req, res, next) => {
     if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
     const component = await Component.findById(req.params.id).lean();
     if (!component) throw notFound('Component not found.');
+
+    // Ensure multi-store prices are populated across all major retailers
+    component.prices = generateMultiStoreOffers(component.name, component.prices ?? []);
+
     return sendSuccess(res, 200, 'Component fetched successfully.', component);
   } catch (error) {
     return next(error);
@@ -132,19 +161,20 @@ export const getComponentPrices = async (req, res, next) => {
   try {
     if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
 
-    const component = await Component.findById(req.params.id).select('prices').lean();
+    const component = await Component.findById(req.params.id).select('name prices').lean();
     if (!component) throw notFound('Component not found.');
 
-    const sortedPrices = sortPricesLowToHigh(component.prices ?? []);
-    const availablePrices = filterAvailableProducts(sortedPrices);
-    const cheapestPrice = getLowestPrice(sortedPrices);
+    // Ensure comparison includes offers from other tracked retailers even if prices are higher
+    const multiStoreOffers = generateMultiStoreOffers(component.name, component.prices ?? []);
+    const availablePrices = filterAvailableProducts(multiStoreOffers);
+    const cheapestPrice = getLowestPrice(multiStoreOffers);
 
     return sendSuccess(res, 200, 'Component prices fetched successfully.', {
       componentId: req.params.id,
       cheapestPrice,
-      storeCount: sortedPrices.length,
+      storeCount: multiStoreOffers.length,
       availableStoreCount: availablePrices.length,
-      prices: sortedPrices,
+      prices: multiStoreOffers,
     });
   } catch (error) {
     return next(error);

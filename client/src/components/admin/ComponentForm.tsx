@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { HiOutlineXMark, HiOutlinePhoto, HiOutlinePlus } from 'react-icons/hi2';
+import { HiOutlineXMark, HiOutlinePhoto, HiOutlinePlus, HiOutlineSparkles } from 'react-icons/hi2';
 import type { ComponentDetail, ComponentFormData } from '../../types/component';
+import { extractSpecsFromName } from '../../utils/specs';
 
 // ── Category-specific specification fields ───────────────────────────
 
@@ -11,21 +12,80 @@ const categoryFields: Record<string, Array<{ name: string; label: string; type: 
     { name: 'threads', label: 'Threads', type: 'number' },
     { name: 'baseClock', label: 'Base Clock', type: 'text' },
     { name: 'boostClock', label: 'Boost Clock', type: 'text' },
+    { name: 'socket', label: 'Socket (e.g. AM5, LGA1700)', type: 'text' },
+    { name: 'tdp', label: 'TDP / Power Draw', type: 'text' },
+    { name: 'cache', label: 'Cache', type: 'text' },
   ],
   GPU: [
-    { name: 'vram', label: 'VRAM', type: 'text' },
-    { name: 'memoryType', label: 'Memory Type', type: 'text' },
-    { name: 'tdp', label: 'TDP', type: 'text' },
+    { name: 'vram', label: 'VRAM Capacity', type: 'text' },
+    { name: 'memoryType', label: 'Memory Type (GDDR6/6X)', type: 'text' },
+    { name: 'tdp', label: 'TDP Power Consumption', type: 'text' },
+    { name: 'recommendedPsu', label: 'Recommended PSU', type: 'text' },
+    { name: 'interface', label: 'Bus Interface', type: 'text' },
+    { name: 'cooling', label: 'Cooling Design', type: 'text' },
   ],
   RAM: [
-    { name: 'capacity', label: 'Capacity', type: 'text' },
-    { name: 'speed', label: 'Speed', type: 'text' },
-    { name: 'type', label: 'Type', type: 'text' },
+    { name: 'capacity', label: 'Capacity (e.g. 32GB)', type: 'text' },
+    { name: 'speed', label: 'Speed (e.g. 6000MHz)', type: 'text' },
+    { name: 'type', label: 'Generation (DDR5/DDR4)', type: 'text' },
+    { name: 'latency', label: 'CAS Latency (e.g. CL30)', type: 'text' },
+    { name: 'rgb', label: 'RGB Lighting', type: 'text' },
   ],
   Motherboard: [
-    { name: 'socket', label: 'Socket', type: 'text' },
-    { name: 'chipset', label: 'Chipset', type: 'text' },
-    { name: 'formFactor', label: 'Form Factor', type: 'text' },
+    { name: 'socket', label: 'CPU Socket', type: 'text' },
+    { name: 'chipset', label: 'Chipset (e.g. B650)', type: 'text' },
+    { name: 'formFactor', label: 'Form Factor (ATX/mATX)', type: 'text' },
+    { name: 'memorySupport', label: 'Memory Support', type: 'text' },
+    { name: 'networking', label: 'Networking / Wi-Fi', type: 'text' },
+    { name: 'storageSlots', label: 'M.2 / Storage Slots', type: 'text' },
+  ],
+  SSD: [
+    { name: 'capacity', label: 'Capacity (e.g. 1TB)', type: 'text' },
+    { name: 'formFactor', label: 'Form Factor (M.2 2280)', type: 'text' },
+    { name: 'interface', label: 'Interface (PCIe 4.0)', type: 'text' },
+    { name: 'readSpeed', label: 'Max Read Speed', type: 'text' },
+    { name: 'writeSpeed', label: 'Max Write Speed', type: 'text' },
+  ],
+  HDD: [
+    { name: 'capacity', label: 'Capacity', type: 'text' },
+    { name: 'formFactor', label: 'Form Factor (3.5-inch)', type: 'text' },
+    { name: 'speed', label: 'RPM (e.g. 7200 RPM)', type: 'text' },
+    { name: 'cache', label: 'Cache Buffer', type: 'text' },
+  ],
+  PSU: [
+    { name: 'wattage', label: 'Wattage Output (e.g. 750W)', type: 'text' },
+    { name: 'efficiency', label: 'Efficiency (80+ Gold)', type: 'text' },
+    { name: 'modularity', label: 'Modularity', type: 'text' },
+    { name: 'standard', label: 'Standard (ATX 3.0)', type: 'text' },
+  ],
+  Cabinet: [
+    { name: 'chassisType', label: 'Chassis Type (Mid Tower)', type: 'text' },
+    { name: 'motherboardSupport', label: 'Motherboard Compatibility', type: 'text' },
+    { name: 'sidePanel', label: 'Side Panel (Tempered Glass)', type: 'text' },
+    { name: 'radiatorSupport', label: 'Radiator Support', type: 'text' },
+    { name: 'gpuClearance', label: 'Max GPU Length', type: 'text' },
+  ],
+  Cooler: [
+    { name: 'coolerType', label: 'Cooler Type (AIO/Air)', type: 'text' },
+    { name: 'radiatorSize', label: 'Radiator / Fan Size', type: 'text' },
+    { name: 'socketSupport', label: 'Socket Compatibility', type: 'text' },
+    { name: 'maxTdp', label: 'Max Thermal TDP', type: 'text' },
+  ],
+  Monitor: [
+    { name: 'screenSize', label: 'Screen Size (e.g. 27")', type: 'text' },
+    { name: 'resolution', label: 'Resolution (1440p)', type: 'text' },
+    { name: 'refreshRate', label: 'Refresh Rate (165Hz)', type: 'text' },
+    { name: 'panelType', label: 'Panel Type (IPS/OLED)', type: 'text' },
+  ],
+  Keyboard: [
+    { name: 'switchType', label: 'Switch Type', type: 'text' },
+    { name: 'formFactor', label: 'Layout (TKL / Full)', type: 'text' },
+    { name: 'connectivity', label: 'Connectivity', type: 'text' },
+  ],
+  Mouse: [
+    { name: 'dpi', label: 'Max DPI', type: 'text' },
+    { name: 'connectivity', label: 'Wireless / Wired', type: 'text' },
+    { name: 'weight', label: 'Weight (grams)', type: 'text' },
   ],
 };
 
@@ -105,6 +165,7 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
     register,
     handleSubmit,
     watch,
+    setValue,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ComponentFormData>({
@@ -120,6 +181,18 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
   const selectedCategory = watch('category');
   const selectedImages = watch('images');
   const specFields = useMemo(() => categoryFields[selectedCategory] ?? [], [selectedCategory]);
+
+  const handleAutoDetectSpecs = () => {
+    const currentName = watch('name');
+    const currentBrand = watch('brand');
+    const currentCat = watch('category');
+    if (!currentName) return;
+
+    const detected = extractSpecsFromName(currentName, currentCat, currentBrand);
+    Object.entries(detected).forEach(([key, val]) => {
+      setValue(`specifications.${key}`, val);
+    });
+  };
 
   // Generate preview URLs for newly selected files
   useEffect(() => {
@@ -243,21 +316,47 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
       </label>
 
       {/* ── Dynamic Specification Fields ───────────────────────── */}
-      {specFields.length > 0 && (
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-          {specFields.map((field) => (
-            <label key={field.name} className={labelClass}>
-              <span className={labelTextClass}>{field.label}</span>
-              <input
-                type={field.type}
-                {...register(`specifications.${field.name}`)}
-                className={inputClass}
-                placeholder={field.label}
-              />
-            </label>
-          ))}
+      <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+          <div>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              Hardware Specifications ({selectedCategory})
+            </h4>
+            <p className="text-xs text-slate-500">
+              Technical parameters and verified architectural specs
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleAutoDetectSpecs}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700 shadow-xs transition hover:bg-cyan-100 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300 self-start sm:self-auto"
+            title="Auto-fill specifications inferred from component title and category"
+          >
+            <HiOutlineSparkles className="h-4 w-4" />
+            Auto-Detect from Title
+          </button>
         </div>
-      )}
+
+        {specFields.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {specFields.map((field) => (
+              <label key={field.name} className={labelClass}>
+                <span className={labelTextClass}>{field.label}</span>
+                <input
+                  type={field.type}
+                  {...register(`specifications.${field.name}`)}
+                  className={inputClass}
+                  placeholder={field.label}
+                />
+              </label>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400">
+            No specific template for this category. Click &quot;Auto-Detect&quot; or enter custom specifications.
+          </p>
+        )}
+      </div>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
