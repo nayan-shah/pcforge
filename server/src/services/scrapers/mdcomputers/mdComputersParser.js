@@ -1,101 +1,71 @@
-﻿import { load } from "cheerio";
+import { load } from 'cheerio';
 
-const BASE_URL = "https://www.mdcomputers.in";
+const cleanText = (v) => String(v ?? '').replace(/\s+/g, ' ').trim();
 
-const cleanText = (v) => String(v ?? "").replace(/\s+/g, " ").trim();
-
-const toAbsoluteUrl = (v) => {
-  const url = cleanText(v);
-  if (!url) return "";
-  if (url.startsWith("//")) return `https:${url}`;
-  try { return new URL(url, BASE_URL).href; } catch { return ""; }
-};
-
+/**
+ * Parses a price string from MDComputers, stripping currency symbols and commas.
+ * Returns a positive number or null.
+ */
 export const parseMdComputersPrice = (raw) => {
-  const value = cleanText(raw).replace(/[^0-9.,]/g, "");
+  const value = cleanText(raw).replace(/[^0-9.,]/g, '');
   if (!value) return null;
-  const price = Number(value.replace(/,/g, ""));
+  const price = Number(value.replace(/,/g, ''));
   return Number.isFinite(price) && price > 0 ? price : null;
 };
 
-const getImageUrl = (card) => {
-  const img = card.find("img.attachment-large, .product-image-link img, img").first();
-  return toAbsoluteUrl(
-    img.attr("src") || img.attr("data-src") || img.attr("data-original") || img.attr("data-lazy-src")
-  );
-};
+/**
+ * Extracts availability status from an MDComputers product detail page.
+ */
+const getAvailability = ($) => {
+  // Check common WooCommerce / MDComputers stock indicators on product pages.
+  const stockEl = $('.stock, .availability, [class*="stock-status"]').first();
+  const stockText = cleanText(stockEl.text());
+  if (/out.of.stock|unavailable|sold.out/i.test(stockText)) return 'Out of Stock';
+  if (/in.stock|available/i.test(stockText)) return 'In Stock';
 
-const getAvailability = (card) => {
-  // MDComputers' custom theme doesn't show stock on search — default In Stock
-  // unless an "out-of-stock" class or text is explicitly present
-  const cls = card.attr("class") || "";
-  if (/out.of.stock|outofstock/i.test(cls)) return "Out of Stock";
-  const statusText = cleanText(card.find("[class*=stock], [class*=availability]").first().text());
-  if (/out.of.stock|unavailable|sold.out/i.test(statusText)) return "Out of Stock";
-  return "In Stock";
+  // Check for "Add to cart" button — presence implies in stock.
+  const hasAddToCart = $('button.single_add_to_cart_button, .add-to-cart-button, [name="add-to-cart"]').length > 0;
+  return hasAddToCart ? 'In Stock' : 'Unknown';
 };
 
 /**
- * Parses the MDComputers search result HTML rendered by Playwright.
+ * Parses an MDComputers product detail page to extract ONLY price + availability.
  *
- * The site uses a custom WordPress/WooCommerce-style theme with these classes:
- *  - Container:  .product-grid-item
- *  - Name:       h3.product-entities-title a
- *  - Link:       a.product-image-link   OR   h3.product-entities-title a
- *  - Image:      img.attachment-large
- *  - Sale price: span.ins .amount
- *  - Old price:  span.del .amount
+ * Targets a direct product page URL (not a search results page).
+ * Price selectors based on MDComputers' WooCommerce / custom theme:
+ *   - Sale price:    span.ins .amount, ins .woocommerce-Price-amount
+ *   - Regular price: .price .amount, .woocommerce-Price-amount
+ *
+ * @param {string} html — Full HTML of the product detail page.
+ * @returns {{ price: number | null, availability: string }}
  */
-export function parseMdComputersSearchHtml(html) {
+export function parseMdComputersProductPrice(html) {
   if (!cleanText(html)) {
-    console.warn("[MDComputers Parser] Empty HTML payload received.");
-    return [];
+    console.warn('[MDComputers Parser] Empty HTML payload received.');
+    return { price: null, availability: 'Unknown' };
   }
 
   try {
     const $ = load(html);
-    const products = [];
 
-    $(".product-grid-item").each((_, node) => {
-      const card = $(node);
+    // Price: prefer sale/discounted price, fall back to any visible price.
+    const salePriceText = cleanText($('p.price ins .amount, .price ins .woocommerce-Price-amount, span.ins .amount').first().text());
+    const regularPriceText = cleanText($('p.price > .amount, .price > .woocommerce-Price-amount, .price .amount').first().text());
+    const anyPriceText = cleanText($('.amount, .woocommerce-Price-amount').first().text());
 
-      // Name and URL
-      const nameLink = card.find("h3.product-entities-title a, .product-entities-title a").first();
-      const imageLink = card.find("a.product-image-link").first();
-      const name = cleanText(nameLink.text()) || cleanText(imageLink.attr("title")) || cleanText(imageLink.find("img").attr("alt"));
-      const productUrl = toAbsoluteUrl(nameLink.attr("href") || imageLink.attr("href"));
+    const price =
+      parseMdComputersPrice(salePriceText) ||
+      parseMdComputersPrice(regularPriceText) ||
+      parseMdComputersPrice(anyPriceText);
 
-      if (!name || !productUrl) {
-        console.warn("[MDComputers Parser] Skipping card with missing name or URL.");
-        return;
-      }
+    const availability = getAvailability($);
 
-      // Price: prefer sale price (ins), fall back to any .amount
-      const salePriceText = cleanText(card.find("span.ins .amount, .ins .amount").first().text());
-      const regularPriceText = cleanText(card.find("span.del .amount, .del .amount").first().text());
-      const anyPriceText = cleanText(card.find(".price .amount, .amount").first().text());
-
-      const currentPrice =
-        parseMdComputersPrice(salePriceText) ||
-        parseMdComputersPrice(regularPriceText) ||
-        parseMdComputersPrice(anyPriceText);
-
-      products.push({
-        name,
-        currentPrice,
-        productUrl,
-        imageUrl: getImageUrl(card),
-        stockStatus: getAvailability(card),
-        currency: "INR",
-      });
-    });
-
-    console.info(`[MDComputers Parser] Parsed ${products.length} product cards.`);
-    return products;
+    console.info('[MDComputers Parser] Parsed product page.', { price, availability });
+    return { price, availability };
   } catch (error) {
-    console.error("[MDComputers Parser] Failed to parse search HTML.", {
+    console.error('[MDComputers Parser] Failed to parse product page.', {
       message: error instanceof Error ? error.message : String(error),
     });
-    return [];
+    return { price: null, availability: 'Unknown' };
   }
 }

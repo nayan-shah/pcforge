@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PCForge — Project Review Document</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 11pt;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #ffffff;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 30px;
+    }
+    h1 { font-size: 24pt; color: #0f172a; margin-bottom: 6px; border-bottom: 3px solid #0f172a; padding-bottom: 12px; }
+    h2 { font-size: 16pt; color: #0f172a; margin-top: 36px; margin-bottom: 12px; border-bottom: 2px solid #e2e8f0; padding-bottom: 6px; }
+    h3 { font-size: 13pt; color: #334155; margin-top: 24px; margin-bottom: 8px; }
+    p, li { margin-bottom: 8px; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 10pt; }
+    th, td { text-align: left; padding: 10px 14px; border: 1px solid #cbd5e1; }
+    th { background: #f1f5f9; color: #0f172a; font-weight: 700; }
+    tr:nth-child(even) { background: #f8fafc; }
+    code { font-family: 'Consolas', 'Courier New', monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 9.5pt; color: #0f172a; }
+    pre { background: #0f172a; color: #f8fafc; padding: 16px 20px; border-radius: 8px; overflow-x: auto; font-family: 'Consolas', monospace; font-size: 9.5pt; line-height: 1.5; }
+    .badge { display: inline-block; background: #0284c7; color: white; padding: 4px 10px; border-radius: 4px; font-size: 9pt; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+    .callout { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 14px 18px; border-radius: 0 6px 6px 0; margin: 16px 0; }
+    .callout-warning { background: #fffbeb; border-left: 4px solid #f59e0b; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 8pt; font-weight: bold; text-transform: uppercase; }
+    .pill-high { background: #fee2e2; color: #991b1b; }
+    .pill-medium { background: #fef3c7; color: #92400e; }
+    .pill-low { background: #e0f2fe; color: #0369a1; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <span class="badge">Technical Review & Architecture Specification</span>
+  <h1>PCForge — Project Review</h1>
+  <p><strong>Repository:</strong> nayan-shah/pcforge &nbsp;|&nbsp; <strong>Stack:</strong> React 18, TypeScript, Node.js, Express, MongoDB, Playwright &nbsp;|&nbsp; <strong>Date:</strong> September 2026</p>
+
+  <div class="callout">
+    <strong>Executive Summary:</strong> PCForge is a production-oriented monorepo powering an Indian PC hardware price comparison, catalog, and custom PC builder platform. It integrates live web scrapers (MDComputers, Vedant, PrimeABGB, PCStudio), a dynamic compatibility/specification parser, power (TDP) calculations, and authenticated build snapshots.
+  </div>
+
+  <h2>1. Monorepo Architecture</h2>
+  <table>
+    <tr><th>Package</th><th>Tech Stack</th><th>Key Responsibilities</th></tr>
+    <tr><td><code>client</code></td><td>React 18, TypeScript, Vite, TailwindCSS, React Router v6</td><td>Single-page app, custom builder canvas, product filters, admin dashboard.</td></tr>
+    <tr><td><code>server</code></td><td>Node.js (ESM), Express, Mongoose, Cheerio, Playwright</td><td>REST API v1, authentication, price normalization, web scraping pipelines.</td></tr>
+    <tr><td><code>shared</code></td><td>TypeScript declarations, shared constants</td><td>Cross-boundary DTO interfaces, hardware category lists, builder slot schemas.</td></tr>
+  </table>
+
+  <h2>2. Key Features</h2>
+  <ul>
+    <li><strong>Live Price Scraping & Aggregation:</strong> Concurrent non-blocking retailer queries across Indian stores with Jaccard token similarity deduplication.</li>
+    <li><strong>Auto-Specification Extraction:</strong> Regex parser automatically extracts socket (AM5, LGA1700), DDR standard, and TDP power draw from component names.</li>
+    <li><strong>Interactive PC Builder:</strong> 8-slot builder with live wattage/cost aggregation and snapshot storage.</li>
+    <li><strong>Role-Based Access Control:</strong> JWT authentication with database-enforced admin verification for component management.</li>
+    <li><strong>AI Hardware Consultant:</strong> Preset archetype matching with hardware bottleneck reasoning.</li>
+  </ul>
+
+  <h2>3. Complete API Endpoint Map (`/api/v1`)</h2>
+  <table>
+    <tr><th>Route</th><th>Method</th><th>Auth Level</th><th>Description</th></tr>
+    <tr><td><code>/auth/register</code></td><td>POST</td><td>Public</td><td>User registration</td></tr>
+    <tr><td><code>/auth/login</code></td><td>POST</td><td>Public</td><td>Authentication and token issuance</td></tr>
+    <tr><td><code>/auth/me</code></td><td>GET</td><td>User</td><td>Current profile lookup</td></tr>
+    <tr><td><code>/auth/profile</code></td><td>PUT</td><td>User</td><td>Update name & avatar</td></tr>
+    <tr><td><code>/auth/password</code></td><td>PUT</td><td>User</td><td>Change account password</td></tr>
+    <tr><td><code>/components</code></td><td>GET</td><td>Public</td><td>Catalog browsing, filtering, and pagination</td></tr>
+    <tr><td><code>/components/featured</code></td><td>GET</td><td>Public</td><td>Featured items for hero section</td></tr>
+    <tr><td><code>/components/:id</code></td><td>GET</td><td>Public</td><td>Component details with multi-store offers</td></tr>
+    <tr><td><code>/components/:id/prices</code></td><td>GET</td><td>Public</td><td>Standalone price comparison data</td></tr>
+    <tr><td><code>/components</code></td><td>POST</td><td>Admin</td><td>Create hardware item with images</td></tr>
+    <tr><td><code>/components/:id</code></td><td>PUT</td><td>Admin</td><td>Update component specifications</td></tr>
+    <tr><td><code>/components/:id</code></td><td>DELETE</td><td>Admin</td><td>Remove component & purge Cloudinary CDN images</td></tr>
+    <tr><td><code>/builds</code></td><td>GET, POST</td><td>User</td><td>List or persist custom builder configurations</td></tr>
+    <tr><td><code>/search?q=...</code></td><td>GET</td><td>Public</td><td>Trigger live multi-retailer scraping</td></tr>
+  </table>
+
+  <h2>4. Security & Technical Risk Assessment</h2>
+  <table>
+    <tr><th>Risk</th><th>Severity</th><th>Impact</th><th>Remediation</th></tr>
+    <tr><td>No rate limiting on auth & search</td><td><span class="pill pill-high">High</span></td><td>Credential stuffing and server load exhaustion</td><td>Implement <code>express-rate-limit</code></td></tr>
+    <tr><td>Zero automated tests</td><td><span class="pill pill-high">High</span></td><td>High risk of regression during scraper/API refactors</td><td>Setup Vitest + Supertest</td></tr>
+    <tr><td>Simulated AI implementation</td><td><span class="pill pill-medium">Medium</span></td><td>Keyword matching rather than real LLM recommendation</td><td>Integrate Gemini / Claude API</td></tr>
+    <tr><td>Playwright in production bundle</td><td><span class="pill pill-medium">Medium</span></td><td>Large container footprint & high RAM usage</td><td>Move scraper to worker service</td></tr>
+    <tr><td>Unsanitized MongoDB queries</td><td><span class="pill pill-medium">Medium</span></td><td>NoSQL injection exposure</td><td>Add <code>express-mongo-sanitize</code></td></tr>
+  </table>
+
+  <h2>5. Actionable Roadmap</h2>
+  <ol>
+    <li><strong>Security Hardening:</strong> Attach rate-limiters, input sanitizers, and token refresh mechanisms.</li>
+    <li><strong>Production AI Integration:</strong> Connect real LLM API for personalized build recommendations.</li>
+    <li><strong>Test Suite:</strong> Add 60%+ unit & integration test coverage across frontend and backend.</li>
+    <li><strong>Repository Cleanup:</strong> Prune 1.8MB debug dumps and empty server directories.</li>
+  </ol>
+</body>
+</html>

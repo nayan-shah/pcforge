@@ -1,63 +1,53 @@
-export const REQUIRED_OFFER_FIELDS = [
-  'storeName',
-  'productName',
-  'price',
-  'currency',
-  'productUrl',
-  'image',
-  'availability',
-  'lastUpdated',
-];
+/**
+ * Simplified offer contract for the refactored price-only scraper architecture.
+ *
+ * After the refactor, scrapers return only { price, availability }.
+ * This module validates those two fields.
+ */
 
-export const normalizeOfferShape = (raw = {}) => ({
-  storeName: String(raw.storeName ?? '').trim(),
-  productName: String(raw.productName ?? '').trim(),
-  price: raw.price != null && Number(raw.price) > 0 ? Number(raw.price) : null,
-  currency: String(raw.currency ?? 'INR').trim().toUpperCase(),
-  productUrl: String(raw.productUrl ?? '').trim(),
-  image: String(raw.image ?? '').trim(),
-  availability: String(raw.availability ?? 'Unknown').trim(),
-  lastUpdated: String(raw.lastUpdated ?? new Date().toISOString()).trim(),
-});
+export const REQUIRED_PRICE_FIELDS = ['price', 'availability'];
 
-export const logInvalidOffer = (storeName, reason, payload = {}) => {
-  console.warn(`[Scraper Adapter] Invalid offer for ${storeName}: ${reason}`, JSON.stringify(payload));
+/**
+ * Validates a scraped price result.
+ *
+ * @param {{ price: number | null, availability: string }} result
+ * @param {string} storeName — Retailer name for logging.
+ * @returns {{ isValid: boolean, reason?: string }}
+ */
+export const validatePriceResult = (result, storeName) => {
+  if (!result || typeof result !== 'object') {
+    console.warn(`[Price Validator] ${storeName}: Result is null or not an object.`);
+    return { isValid: false, reason: 'Result is null or not an object.' };
+  }
+
+  if (result.price == null || Number.isNaN(Number(result.price)) || Number(result.price) <= 0) {
+    console.warn(`[Price Validator] ${storeName}: Price is missing or not a positive number.`, { price: result.price });
+    return { isValid: false, reason: 'Price is missing or not a positive number.' };
+  }
+
+  if (!result.availability || typeof result.availability !== 'string' || result.availability.trim() === '') {
+    console.warn(`[Price Validator] ${storeName}: Availability is missing or empty.`);
+    return { isValid: false, reason: 'Availability is missing or empty.' };
+  }
+
+  return { isValid: true };
 };
 
-export const validateOffer = (offer, storeName) => {
-  const missingFields = REQUIRED_OFFER_FIELDS.filter((field) => {
-    const value = offer?.[field];
-    return value === undefined || value === null || String(value).trim() === '';
-  });
+/**
+ * Creates a standardized price entry from a raw scraper result.
+ *
+ * @param {string} storeName
+ * @param {{ price: number | null, availability: string }} rawResult
+ * @returns {{ price: number | null, availability: string, lastUpdated: Date, error: string | null, isValid: boolean }}
+ */
+export const createPriceEntry = (storeName, rawResult) => {
+  const validation = validatePriceResult(rawResult, storeName);
 
-  if (missingFields.length > 0) {
-    logInvalidOffer(storeName, `Missing required fields: ${missingFields.join(', ')}`, offer);
-    return { isValid: false, missingFields };
-  }
-
-  if (offer.price == null || Number.isNaN(Number(offer.price)) || Number(offer.price) <= 0) {
-    logInvalidOffer(storeName, 'Price must be a positive number.', offer);
-    return { isValid: false, missingFields: ['price'] };
-  }
-
-  if (!/^https?:\/\//i.test(String(offer.productUrl))) {
-    logInvalidOffer(storeName, 'productUrl must be a valid absolute URL.', offer);
-    return { isValid: false, missingFields: ['productUrl'] };
-  }
-
-  return { isValid: true, missingFields: [] };
-};
-
-export const createStandardOffer = (storeName, rawPayload = {}) => {
-  const offer = normalizeOfferShape({
-    ...rawPayload,
-    storeName,
-  });
-
-  const result = validateOffer(offer, storeName);
   return {
-    ...offer,
-    isValid: result.isValid,
-    missingFields: result.missingFields,
+    price: validation.isValid ? Number(rawResult.price) : null,
+    availability: rawResult?.availability || 'Unknown',
+    lastUpdated: new Date(),
+    error: validation.isValid ? null : (validation.reason || 'Validation failed'),
+    isValid: validation.isValid,
   };
 };
