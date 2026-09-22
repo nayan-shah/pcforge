@@ -64,3 +64,41 @@ export function parsePrimeAbgbProductPrice(html) {
     return { price: null, availability: 'Unknown' };
   }
 }
+
+/**
+ * Parses a PrimeABGB search results page and returns an array of product objects.
+ * Used by the search orchestrator flow.
+ *
+ * @param {string} html — Full HTML of the search results page.
+ * @returns {Array<{ product_name: string, sale_price: number, currency_code: string, link: string, image_url: string, stock: string }>}
+ */
+export function parsePrimeAbgbSearchHtml(html) {
+  if (!text(html)) return [];
+
+  try {
+    const $ = load(html);
+    const products = [];
+
+    // PrimeABGB uses WooCommerce — product cards in search/archive pages.
+    $('li.product, .product-grid-item, .products .product').each((_, el) => {
+      const $el = $(el);
+      const name = text($el.find('.woocommerce-loop-product__title, h2, .product-title a').first().text());
+      const priceText = text($el.find('.price ins .woocommerce-Price-amount, .price .woocommerce-Price-amount').first().text());
+      const link = $el.find('a.woocommerce-LoopProduct-link, a').first().attr('href') || '';
+      const imageUrl = $el.find('img').first().attr('src') || '';
+
+      const price = parsePrice(priceText);
+      if (name && price) {
+        products.push({ product_name: name, sale_price: price, currency_code: 'INR', link, image_url: imageUrl, stock: 'In Stock' });
+      }
+    });
+
+    console.info('[PrimeABGB Parser] Parsed search results.', { count: products.length });
+    return products;
+  } catch (error) {
+    console.error('[PrimeABGB Parser] Failed to parse search page.', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}

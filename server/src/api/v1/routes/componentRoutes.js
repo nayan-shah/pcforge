@@ -24,6 +24,15 @@ router.get('/:id', componentController.getComponentById);
 // Get all retailer prices for a component ordered by lowest price first.
 router.get('/:id/prices', componentController.getComponentPrices);
 
+// POST /:id/prices — clean public alias to fetch / refresh live prices.
+// Calls getPrices() which serves cached data when fresh (per-store TTL)
+// and only triggers a live scrape when prices are stale.
+// Use ?forceRefresh=true on either endpoint to bypass the TTL cache.
+router.post('/:id/prices', componentController.fetchLiveComponentPrices);
+
+// Legacy alias with explicit /refresh suffix — kept for backwards compatibility.
+router.post('/:id/prices/refresh', componentController.fetchLiveComponentPrices);
+
 // ── Admin-only routes (JWT + admin role required) ────────────────────
 // authMiddleware verifies the JWT and sets req.user.
 // adminMiddleware performs a DB lookup to confirm the user's role is 'admin'.

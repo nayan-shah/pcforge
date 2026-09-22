@@ -1,4 +1,4 @@
-export { createStandardOffer, validateOffer } from './offerContract.js';
+export { createStandardOffer, validateOffer, logInvalidOffer, createPriceEntry, validatePriceResult } from './offerContract.js';
 export { default as normalizeAmazon } from '../amazon/normalizeAmazon.js';
 export { default as normalizeMDComputers } from '../mdcomputers/normalizeMDComputers.js';
 export { default as normalizePrimeABGB } from '../primeabgb/normalizePrimeABGB.js';

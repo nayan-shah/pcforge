@@ -12,10 +12,10 @@ import {
   HiOutlineCpuChip,
 } from 'react-icons/hi2';
 import useRetailerSearch from '../hooks/useRetailerSearch';
-import type { RetailerOffer, ComponentDetail } from '../types/component';
-import ProductCard from '../components/catalog/ProductCard';
+import type { RetailerOffer, CatalogSearchResult } from '../types/component';
+import CatalogSearchCard from '../components/catalog/CatalogSearchCard';
 
-import { COMPONENT_BRANDS, getComponentBrand } from '../constants/brands';
+import { getComponentBrand } from '../constants/brands';
 import { STORE_COLORS } from '../constants/retailers';
 import { formatPrice, formatDate } from '../utils/formatters';
 
@@ -151,12 +151,12 @@ function LoadingSkeleton() {
 }
 
 /* -- Retailer status pills (shown while loading) ------------------ */
-const RETAILERS = ['MDComputers', 'PrimeABGB', 'Vedant'];
+const SCRAPING_RETAILERS = ['MDComputers', 'PrimeABGB', 'Vedant', 'PCStudio'];
 
 function ScrapingStatus() {
   return (
     <div className="flex flex-wrap gap-2">
-      {RETAILERS.map((name) => (
+      {SCRAPING_RETAILERS.map((name) => (
         <span
           key={name}
           className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm"
@@ -172,25 +172,25 @@ function ScrapingStatus() {
   );
 }
 
-/* -- Local database components section ----------------------------- */
-function LocalComponentsSection({ components }: { components: ComponentDetail[] }) {
-  if (!components || components.length === 0) return null;
+/* -- Catalog components section (with per-retailer price grid) ----- */
+function CatalogResultsSection({ results }: { results: CatalogSearchResult[] }) {
+  if (!results || results.length === 0) return null;
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50 px-5 py-4">
         <HiOutlineCpuChip className="h-5 w-5 text-violet-600 flex-shrink-0" />
         <div>
           <p className="text-sm font-semibold text-violet-900">
-            {components.length} component{components.length !== 1 ? 's' : ''} found in catalog
+            {results.length} component{results.length !== 1 ? 's' : ''} found in catalog
           </p>
           <p className="text-xs text-violet-600 mt-0.5">
-            Matching products from the PCForge database
+            PCForge catalog · prices from MDComputers, Vedant, PrimeABGB, PCStudio
           </p>
         </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {components.map((component) => (
-          <ProductCard key={component._id} component={component} />
+      <div className="space-y-3">
+        {results.map((result) => (
+          <CatalogSearchCard key={result._id} result={result} />
         ))}
       </div>
     </div>
@@ -340,6 +340,7 @@ export default function SearchResults() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
+  const catalogResults = data?.catalogResults ?? [];
   const availableStores = data ? Array.from(new Set(data.offers.map((o) => o.storeName))) : [];
   const availableBrands = data
     ? Array.from(new Set(data.offers.map((offer) => getComponentBrand(offer.productName)))).sort()
@@ -496,8 +497,11 @@ export default function SearchResults() {
               )}
             </div>
 
+            {/* Catalog components with inline per-retailer price grid */}
+            {catalogResults.length > 0 && <CatalogResultsSection results={catalogResults} />}
+
             {/* No results at all */}
-            {filteredOffers.length === 0 && (!data.localComponents || data.localComponents.length === 0) && (
+            {filteredOffers.length === 0 && catalogResults.length === 0 && (
               <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-12 text-center">
                 <HiOutlineMagnifyingGlass className="mx-auto h-8 w-8 text-slate-300" />
                 <h2 className="mt-3 text-sm font-bold text-slate-700">No matching offers found</h2>

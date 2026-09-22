@@ -61,3 +61,41 @@ export function parseVedantProductPrice(html) {
     return { price: null, availability: 'Unknown' };
   }
 }
+
+/**
+ * Parses a Vedant Computers search results page and returns an array of product objects.
+ * Used by the search orchestrator flow.
+ *
+ * @param {string} html — Full HTML of the search results page.
+ * @returns {Array<{ name: string, price: number, currency: string, url: string, image: string, itemStatus: string }>}
+ */
+export function parseVedantSearchHtml(html) {
+  if (!text(html)) return [];
+
+  try {
+    const $ = load(html);
+    const products = [];
+
+    // Vedant uses OpenCart Journal3 theme — product cards in search results.
+    $('.product-layout, .product-thumb, .product-grid .product-item, .main-products .product-item-container').each((_, el) => {
+      const $el = $(el);
+      const name = text($el.find('.name a, .product-name a, h4 a, .caption h4 a').first().text());
+      const priceText = text($el.find('.price-new, .price, .product-price').first().text());
+      const url = $el.find('.name a, .product-name a, h4 a, .caption h4 a').first().attr('href') || '';
+      const image = $el.find('img.img-responsive, img').first().attr('src') || $el.find('img').first().attr('data-src') || '';
+
+      const price = parsePrice(priceText);
+      if (name && price) {
+        products.push({ name, price, currency: 'INR', url, image, itemStatus: 'In Stock' });
+      }
+    });
+
+    console.info('[Vedant Parser] Parsed search results.', { count: products.length });
+    return products;
+  } catch (error) {
+    console.error('[Vedant Parser] Failed to parse search page.', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}

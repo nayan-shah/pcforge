@@ -116,13 +116,47 @@ export interface RetailerOffer {
   lastUpdated: string;
 }
 
+/**
+ * A single retailer's price entry inside a CatalogSearchResult.
+ * Keyed by store name (e.g. "MDComputers", "Vedant", "PrimeABGB", "PCStudio").
+ */
+export interface RetailerPriceSummary {
+  price: number | null;
+  availability: string;
+  lastUpdated: string;
+  productUrl: string | null;
+  currency: string;
+  inStock: boolean;
+}
+
+/**
+ * A catalog component enriched with per-retailer price maps.
+ * Returned by the search endpoint in catalogResults[].
+ * The prices object is keyed by store name for O(1) access in the UI.
+ */
+export interface CatalogSearchResult {
+  _id: string;
+  name: string;
+  brand: string;
+  category: string;
+  images: string[];
+  specifications: Record<string, unknown>;
+  compatibility: Record<string, unknown>;
+  rating: number;
+  reviewCount: number;
+  stockStatus: string;
+  prices: Record<string, RetailerPriceSummary>;
+}
+
 /** Shape returned by GET /api/search?query=... */
 export interface RetailerSearchResponse {
   query: string;
   totalStores: number;
   totalOffers: number;
   cheapestOffer: RetailerOffer | null;
+  /** Raw per-retailer scraper offers (OfferCard list). */
   offers: RetailerOffer[];
-  localComponents: ComponentDetail[];
+  /** DB catalog components enriched with per-store price maps. */
+  catalogResults: CatalogSearchResult[];
   localComponentCount: number;
 }

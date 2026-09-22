@@ -1,11 +1,21 @@
 /**
- * Simplified offer contract for the refactored price-only scraper architecture.
+ * Offer contract for the scraper architecture.
  *
- * After the refactor, scrapers return only { price, availability }.
- * This module validates those two fields.
+ * Exports TWO sets of functions:
+ *
+ *   1. Price-only (used by priceService.js for direct product page scraping):
+ *      - validatePriceResult(result, storeName)
+ *      - createPriceEntry(storeName, rawResult)
+ *
+ *   2. Full offer (used by search-flow normalizers and scraper services):
+ *      - createStandardOffer(storeName, rawData)
+ *      - validateOffer(offer)
+ *      - logInvalidOffer(storeName, message, offer)
  */
 
 export const REQUIRED_PRICE_FIELDS = ['price', 'availability'];
+
+// ── Price-only helpers (product page scraping) ──────────────────────
 
 /**
  * Validates a scraped price result.
@@ -51,3 +61,65 @@ export const createPriceEntry = (storeName, rawResult) => {
     isValid: validation.isValid,
   };
 };
+
+// ── Full offer helpers (search-flow normalizers) ────────────────────
+
+/**
+ * Creates a standardized offer from raw retailer data.
+ * Used by the per-retailer normalizer modules (normalizeMDComputers, etc.).
+ *
+ * @param {string} storeName
+ * @param {object} rawData — Raw scraped product data with mixed field names.
+ * @returns {object} — Standardized offer with isValid flag.
+ */
+export const createStandardOffer = (storeName, rawData = {}) => {
+  const price = Number(rawData.price) || 0;
+  const isValid = price > 0 && !!rawData.productName;
+
+  return {
+    storeName,
+    productName: rawData.productName || '',
+    price,
+    currency: rawData.currency || 'INR',
+    productUrl: rawData.productUrl || '',
+    image: rawData.image || '',
+    availability: rawData.availability || 'Unknown',
+    lastUpdated: rawData.lastUpdated || new Date().toISOString(),
+    isValid,
+  };
+};
+
+/**
+ * Validates a standardized offer (used by search flow).
+ *
+ * @param {object} offer — Output from createStandardOffer.
+ * @returns {{ isValid: boolean, reason?: string }}
+ */
+export const validateOffer = (offer) => {
+  if (!offer || typeof offer !== 'object') {
+    return { isValid: false, reason: 'Offer is null or not an object.' };
+  }
+  if (!offer.productName) {
+    return { isValid: false, reason: 'Missing product name.' };
+  }
+  if (!offer.price || offer.price <= 0) {
+    return { isValid: false, reason: 'Price is missing or invalid.' };
+  }
+  return { isValid: true };
+};
+
+/**
+ * Logs a discarded/invalid offer for debugging.
+ *
+ * @param {string} storeName
+ * @param {string} message
+ * @param {object} offer
+ */
+export const logInvalidOffer = (storeName, message, offer) => {
+  console.warn(`[${storeName} Normalizer] ${message}`, {
+    productName: offer?.productName,
+    price: offer?.price,
+    productUrl: offer?.productUrl,
+  });
+};
+

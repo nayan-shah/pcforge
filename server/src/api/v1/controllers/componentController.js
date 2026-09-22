@@ -5,6 +5,7 @@ import { ApiError, notFound } from '../../../utils/apiError.js';
 import { sendSuccess } from '../../../utils/apiResponse.js';
 import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts, generateMultiStoreOffers } from '../../../services/priceComparisonService.js';
 import { resolveSpecifications } from '../../../utils/specs.js';
+import { fetchLivePrices, getPrices } from '../../../services/priceService.js';
 
 const MAX_LIMIT = 100;
 const SORTS = {
@@ -171,6 +172,42 @@ export const getComponentPrices = async (req, res, next) => {
 
     return sendSuccess(res, 200, 'Component prices fetched successfully.', {
       componentId: req.params.id,
+      cheapestPrice,
+      storeCount: multiStoreOffers.length,
+      availableStoreCount: availablePrices.length,
+      prices: multiStoreOffers,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const fetchLiveComponentPrices = async (req, res, next) => {
+  try {
+    if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
+
+    const component = await Component.findById(req.params.id).select('name').lean();
+    if (!component) throw notFound('Component not found.');
+
+    const forceRefresh = req.query.forceRefresh === 'true';
+
+    console.info(`[ComponentController] Live price fetch requested for "${component.name}".`, {
+      componentId: req.params.id,
+      forceRefresh,
+    });
+
+    const prices = forceRefresh
+      ? await fetchLivePrices(req.params.id)
+      : await getPrices(req.params.id, { forceRefresh: false });
+
+    // Normalize and sort for the response.
+    const multiStoreOffers = generateMultiStoreOffers(component.name, prices ?? []);
+    const availablePrices = filterAvailableProducts(multiStoreOffers);
+    const cheapestPrice = getLowestPrice(multiStoreOffers);
+
+    return sendSuccess(res, 200, 'Live prices fetched successfully.', {
+      componentId: req.params.id,
+      componentName: component.name,
       cheapestPrice,
       storeCount: multiStoreOffers.length,
       availableStoreCount: availablePrices.length,

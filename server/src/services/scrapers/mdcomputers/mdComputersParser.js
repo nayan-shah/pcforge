@@ -69,3 +69,49 @@ export function parseMdComputersProductPrice(html) {
     return { price: null, availability: 'Unknown' };
   }
 }
+
+/**
+ * Parses an MDComputers search results page and returns an array of product objects.
+ * Used by the search orchestrator flow (not by the price-only flow).
+ *
+ * @param {string} html — Full HTML of the search results page.
+ * @returns {Array<{ name: string, currentPrice: number, currency: string, productUrl: string, imageUrl: string, stockStatus: string }>}
+ */
+export function parseMdComputersSearchHtml(html) {
+  if (!cleanText(html)) return [];
+
+  try {
+    const $ = load(html);
+    const products = [];
+
+    // MDComputers uses a Magento/custom grid layout for search results.
+    $('li.product-item, .product-grid-item, .product-item-info').each((_, el) => {
+      const $el = $(el);
+      const name = cleanText($el.find('.product-item-link, .product-entities-title a, .product-name a').first().text());
+      const priceText = cleanText($el.find('.price, .price-wrapper .price, .amount').first().text());
+      const productUrl = $el.find('.product-item-link, .product-entities-title a, .product-name a').first().attr('href') || '';
+      const imageUrl = $el.find('img.product-image-photo, img').first().attr('src') || '';
+
+      const price = parseMdComputersPrice(priceText);
+      if (name && price) {
+        products.push({
+          name,
+          currentPrice: price,
+          currency: 'INR',
+          productUrl,
+          imageUrl,
+          stockStatus: 'Available',
+        });
+      }
+    });
+
+    console.info('[MDComputers Parser] Parsed search results.', { count: products.length });
+    return products;
+  } catch (error) {
+    console.error('[MDComputers Parser] Failed to parse search page.', {
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return [];
+  }
+}
+
