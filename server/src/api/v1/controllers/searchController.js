@@ -2,7 +2,7 @@ import { ApiError } from '../../../utils/apiError.js';
 import { sendSuccess } from '../../../utils/apiResponse.js';
 import { searchRetailers } from '../../../services/searchOrchestratorService.js';
 import { getPrices } from '../../../services/priceService.js';
-import { generateMultiStoreOffers } from '../../../services/priceComparisonService.js';
+import { sortPricesLowToHigh } from '../../../services/priceComparisonService.js';
 import Component from '../../../models/Component.js';
 
 /**
@@ -86,13 +86,12 @@ async function buildCatalogResults(components) {
         // getPrices() returns the raw prices[] array from the DB / scraper.
         const rawPrices = await getPrices(String(comp._id), { forceRefresh: false });
 
-        // generateMultiStoreOffers fills in any missing stores with realistic
-        // derived prices, so we always show all 4 retailers in the UI.
-        offers = generateMultiStoreOffers(comp.name, rawPrices ?? comp.prices ?? []);
+        // Normalize and sort real prices only (no estimated/fake offers).
+        offers = sortPricesLowToHigh(rawPrices ?? comp.prices ?? []);
       } catch (err) {
         // Fall back to cached DB prices if the price service errors.
         console.warn(`[SearchController] Price enrichment failed for "${comp.name}": ${err.message}`);
-        offers = generateMultiStoreOffers(comp.name, comp.prices ?? []);
+        offers = sortPricesLowToHigh(comp.prices ?? []);
       }
 
       return {

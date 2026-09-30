@@ -3,7 +3,7 @@ import Component from '../../../models/Component.js';
 import { deleteCloudinaryImages, getUploadedImageUrls } from '../middleware/uploadMiddleware.js';
 import { ApiError, notFound } from '../../../utils/apiError.js';
 import { sendSuccess } from '../../../utils/apiResponse.js';
-import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts, generateMultiStoreOffers } from '../../../services/priceComparisonService.js';
+import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../../../services/priceComparisonService.js';
 import { resolveSpecifications } from '../../../utils/specs.js';
 import { fetchLivePrices, getPrices } from '../../../services/priceService.js';
 
@@ -149,8 +149,8 @@ export const getComponentById = async (req, res, next) => {
     const component = await Component.findById(req.params.id).lean();
     if (!component) throw notFound('Component not found.');
 
-    // Ensure multi-store prices are populated across all major retailers
-    component.prices = generateMultiStoreOffers(component.name, component.prices ?? []);
+    // Normalize and sort real retailer prices (no estimated/fake offers).
+    component.prices = sortPricesLowToHigh(component.prices ?? []);
 
     return sendSuccess(res, 200, 'Component fetched successfully.', component);
   } catch (error) {
@@ -165,8 +165,8 @@ export const getComponentPrices = async (req, res, next) => {
     const component = await Component.findById(req.params.id).select('name prices').lean();
     if (!component) throw notFound('Component not found.');
 
-    // Ensure comparison includes offers from other tracked retailers even if prices are higher
-    const multiStoreOffers = generateMultiStoreOffers(component.name, component.prices ?? []);
+    // Normalize and sort real retailer prices only.
+    const multiStoreOffers = sortPricesLowToHigh(component.prices ?? []);
     const availablePrices = filterAvailableProducts(multiStoreOffers);
     const cheapestPrice = getLowestPrice(multiStoreOffers);
 
@@ -200,8 +200,8 @@ export const fetchLiveComponentPrices = async (req, res, next) => {
       ? await fetchLivePrices(req.params.id)
       : await getPrices(req.params.id, { forceRefresh: false });
 
-    // Normalize and sort for the response.
-    const multiStoreOffers = generateMultiStoreOffers(component.name, prices ?? []);
+    // Normalize and sort real retailer prices only.
+    const multiStoreOffers = sortPricesLowToHigh(prices ?? []);
     const availablePrices = filterAvailableProducts(multiStoreOffers);
     const cheapestPrice = getLowestPrice(multiStoreOffers);
 
