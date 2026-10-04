@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import type { SelectedComponent } from '../../types/builder';
+import type { CompatibilityWarning } from '../../utils/compatibility';
 import { formatPrice } from '../../utils/formatters';
-import { HiOutlineBolt, HiOutlineCheckCircle, HiOutlineSparkles, HiOutlineClipboardDocumentCheck } from 'react-icons/hi2';
+import { HiOutlineBolt, HiOutlineCheckCircle, HiOutlineSparkles, HiOutlineClipboardDocumentCheck, HiExclamationTriangle } from 'react-icons/hi2';
 
 interface BuildSummaryProps {
   selectedComponents: SelectedComponent[];
+  warnings: CompatibilityWarning[];
   onSaveBuild: () => void;
   onAskAI: () => void;
 }
 
 export default function BuildSummary({
   selectedComponents,
+  warnings,
   onSaveBuild,
   onAskAI,
 }: BuildSummaryProps) {
@@ -135,6 +138,32 @@ export default function BuildSummary({
           })}
         </div>
       </div>
+
+      {/* Compatibility Warnings */}
+      {warnings.length > 0 && (
+        <div className="space-y-2">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-amber-400">
+            Compatibility Alerts
+          </p>
+          {warnings.map((warning, i) => (
+            <div
+              key={i}
+              className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 border text-[11px] ${
+                warning.severity === 'error'
+                  ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                  : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+              }`}
+            >
+              <HiExclamationTriangle
+                className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${
+                  warning.severity === 'error' ? 'text-rose-400' : 'text-amber-400'
+                }`}
+              />
+              <span className="font-medium leading-snug">{warning.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="space-y-2.5 pt-2">

@@ -24,6 +24,7 @@ import CategoryIcon from '../components/common/CategoryIcon';
 import { getLowestPrice } from '../utils/price';
 import { formatPrice } from '../utils/formatters';
 import { resolveSpecifications } from '../utils/specs';
+import { checkCompatibility } from '../utils/compatibility';
 
 const buildSteps: BuildStep[] = [
   {
@@ -139,6 +140,7 @@ const mapComponentToBuilderOption = (component: ComponentDetail): BuilderOption 
     category: categoryMap[component.category] ?? 'CPU',
     compatibilityNotes: finalNotes,
     image: component.images?.[0] || '',
+    specifications: resolved.flatSpecs,
   };
 };
 
@@ -380,6 +382,20 @@ export default function PCBuilderPage() {
     };
   }, [selections]);
 
+  const warnings = useMemo(() => checkCompatibility(selections), [selections]);
+
+  const warningSlots = useMemo(() => {
+    const map = new Map<string, 'error' | 'warning'>();
+    for (const w of warnings) {
+      for (const s of w.slots) {
+        if (!map.has(s) || w.severity === 'error') {
+          map.set(s, w.severity);
+        }
+      }
+    }
+    return map;
+  }, [warnings]);
+
   return (
     <section className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
@@ -429,6 +445,16 @@ export default function PCBuilderPage() {
                         <span className="text-xs font-bold leading-tight truncate">
                           {step.category}
                         </span>
+                        {warningSlots.has(stepKey) && (
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                              warningSlots.get(stepKey) === 'error'
+                                ? 'bg-rose-400'
+                                : 'bg-amber-400'
+                            }`}
+                            title="Compatibility issue"
+                          />
+                        )}
                       </div>
 
                       {isSelected && (
@@ -503,6 +529,7 @@ export default function PCBuilderPage() {
           )}
           <BuildSummary
             selectedComponents={selectedComponents}
+            warnings={warnings}
             onSaveBuild={handleSaveBuild}
             onAskAI={handleAskAI}
           />

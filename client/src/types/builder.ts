@@ -11,6 +11,7 @@ export interface BuilderOption {
   category: ComponentCategory;
   compatibilityNotes: string[];
   image: string;
+  specifications?: Record<string, string>;
 }
 
 export interface BuilderSelections {
