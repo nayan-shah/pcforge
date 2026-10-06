@@ -1,0 +1,34 @@
+# Dependencies (re-installed inside the container)
+node_modules/
+**/node_modules/
+
+# Environment files (secrets — never bake into images)
+.env
+**/.env
+
+# Build artifacts
+dist/
+**/dist/
+build/
+**/build/
+
+# Version control
+.git/
+.gitignore
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Project review / debug files
+PROJECT_REVIEW.*
+*_tree*.txt
+*.tree.txt
+debug_*.js
+
+# Docker files themselves (avoid recursive context)
+**/Dockerfile
+docker-compose*.yml
+.dockerignore
