@@ -77,6 +77,93 @@ const urls = (name) => {
   ];
 };
 
+/** Use a curated set of generic PC hardware stock photos for each category. */
+const CATEGORY_IMAGES = {
+  CPU: [
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555618569-c0599c000af6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1588508062175-d0f5c76a7c8d?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=1200&q=80',
+  ],
+  GPU: [
+    'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1624230017818-7f8c3b91b35a?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1535223289827-42f1e9919769?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Motherboard: [
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555618569-c0599c000af6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1588508062175-d0f5c76a7c8d?auto=format&fit=crop&w=1200&q=80',
+  ],
+  RAM: [
+    'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=1200&q=80',
+  ],
+  SSD: [
+    'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1588508062175-d0f5c76a7c8d?auto=format&fit=crop&w=1200&q=80',
+  ],
+  HDD: [
+    'https://images.unsplash.com/photo-1588508062175-d0f5c76a7c8d?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555618569-c0599c000af6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+  ],
+  PSU: [
+    'https://images.unsplash.com/photo-1525547719571-a2d4ac8945e2?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1555255707-c07966088b7b?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1591488320449-011701bb6704?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Cabinet: [
+    'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1497366412874-3415097a27e7?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Cooler: [
+    'https://images.unsplash.com/photo-1555618569-c0599c000af6?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1588508062175-d0f5c76a7c8d?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Monitor: [
+    'https://images.unsplash.com/photo-1527443195645-1133f7f28990?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1585792180666-f9dd2f6ac5d8?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1516321165247-4aa89a48be28?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Keyboard: [
+    'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1585792180666-f9dd2f6ac5d8?auto=format&fit=crop&w=1200&q=80',
+  ],
+  Mouse: [
+    'https://images.unsplash.com/photo-1527814050087-3793815479db?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1585792180666-f9dd2f6ac5d8?auto=format&fit=crop&w=1200&q=80',
+  ],
+};
+
+/** Return 4 product images for a component, keeping the result deterministic. */
+const buildComponentImages = (name, category) => {
+  const pool = CATEGORY_IMAGES[category] ?? CATEGORY_IMAGES.CPU;
+  const seed = Array.from(name).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+
+  return pool.map((url, index) => {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}sig=${seed + index}`;
+  });
+};
+
 // ── Component Data ───────────────────────────────────────────────────
 
 const RAW_COMPONENTS = [
@@ -415,7 +502,7 @@ async function main() {
       brand: raw.brand,
       category: raw.category,
       description: resolved.inferredDescription,
-      images: [],
+      images: buildComponentImages(raw.name, raw.category),
       specifications: resolved.flatSpecs,
       compatibility: resolved.compatibility,
       prices: urls(raw.name),

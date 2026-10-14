@@ -8,7 +8,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "start": "node src/index.js",
-    "lint": "eslint . --ext .js"
+    "lint": "eslint . --ext .js",
+    "seed:components": "node src/scripts/seedComponents.js"
   },
   "dependencies": {
     "axios": "^1.7.7",
