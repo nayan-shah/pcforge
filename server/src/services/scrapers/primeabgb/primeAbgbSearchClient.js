@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { RetailerFetchError } from '../retailerMarkup.js';
 
 const BASE_URL = 'https://www.primeabgb.com';
 const TIMEOUT_MS = 30_000;
@@ -38,7 +39,7 @@ export async function fetchPrimeAbgbSearchHtml(query) {
 
     // Remove Playwright fingerprints
     await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      Object.defineProperty(globalThis.navigator, 'webdriver', { get: () => undefined });
     });
 
     const page = await context.newPage();
@@ -46,7 +47,7 @@ export async function fetchPrimeAbgbSearchHtml(query) {
 
     console.info('[PrimeABGB Playwright] Navigating.', { url });
     const response = await page.goto(url, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_MS,
     });
 
@@ -55,19 +56,24 @@ export async function fetchPrimeAbgbSearchHtml(query) {
         status: response?.status(),
         url,
       });
-      return null;
+      throw new RetailerFetchError(
+        `PrimeABGB returned HTTP ${response?.status() ?? 'no response'}.`,
+        response?.status(),
+      );
     }
 
     // Extra wait for JS-rendered content (LiteSpeed deferred scripts)
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Wait for WooCommerce product cards to appear
     await page
       .waitForSelector('li.product, .products .product, .product-small', {
-        timeout: 10_000,
+        timeout: 5_000,
       })
       .catch(() => {
-        console.warn('[PrimeABGB Playwright] Product selector timed out — returning available HTML.');
+        console.warn(
+          '[PrimeABGB Playwright] Product selector timed out — returning available HTML.',
+        );
       });
 
     const html = await page.content();
@@ -81,7 +87,7 @@ export async function fetchPrimeAbgbSearchHtml(query) {
       query: searchQuery,
       message: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   } finally {
     if (browser) await browser.close().catch(() => {});
   }

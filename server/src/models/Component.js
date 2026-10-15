@@ -38,11 +38,11 @@ const priceSchema = new Schema(
     },
     price: {
       type: Number,
-      min: [0, 'Price must be a non-negative number'],
+      min: [0.01, 'Price must be greater than zero'],
     },
     currentPrice: {
       type: Number,
-      min: [0, 'Price must be a non-negative number'],
+      min: [0.01, 'Price must be greater than zero'],
     },
     currency: {
       type: String,
@@ -54,19 +54,28 @@ const priceSchema = new Schema(
     },
     inStock: {
       type: Boolean,
-      default: true,
     },
     availability: {
       type: String,
       trim: true,
-      default: 'Available',
+      default: 'Unknown',
     },
     lastUpdated: {
       type: Date,
-      default: Date.now,
+    },
+    lastAttemptAt: {
+      type: Date,
+    },
+    stale: {
+      type: Boolean,
+      default: true,
+    },
+    lastFetchError: {
+      type: String,
+      trim: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 // Main component schema with grouped fields for clarity.
@@ -183,7 +192,7 @@ const componentSchema = new Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 // Useful indexes for filtering, sorting, and search.

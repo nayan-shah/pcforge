@@ -119,7 +119,6 @@ const emptyPriceOffer = {
   productUrl: '',
   price: '' as const,
   currency: 'INR',
-  inStock: true,
 };
 
 const formDefaults = (component?: ComponentDetail | null): ComponentFormData => ({
@@ -135,7 +134,7 @@ const formDefaults = (component?: ComponentDetail | null): ComponentFormData => 
       store: offer.store ?? offer.storeName ?? '',
       productUrl: offer.productUrl,
       price: offer.price ?? offer.currentPrice ?? '',
-      inStock: offer.inStock ?? (offer.availability ?? '').toLowerCase() !== 'out of stock',
+      inStock: offer.inStock,
       currency: offer.currency ?? 'INR',
     })) ?? [],
 });
@@ -353,7 +352,8 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
           </div>
         ) : (
           <p className="text-xs text-slate-400">
-            No specific template for this category. Click &quot;Auto-Detect&quot; or enter custom specifications.
+            No specific template for this category. Click &quot;Auto-Detect&quot; or enter custom
+            specifications.
           </p>
         )}
       </div>
@@ -392,11 +392,11 @@ export default function ComponentForm({ initialData, onSubmit, onCancel }: Compo
             />
             <input
               type="number"
-              min="0"
+              min="0.01"
               step="0.01"
               {...register(`prices.${index}.price`, {
                 required: true,
-                min: 0,
+                min: 0.01,
                 valueAsNumber: true,
               })}
               className={inputClass}

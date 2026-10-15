@@ -53,28 +53,27 @@ function buildFormData(data: ComponentFormData, isEdit = false): FormData {
   fd.append(
     'prices',
     JSON.stringify(
-      data.prices.map((price) => ({
-        store: price.store || price.storeName || '',
-        storeName: price.storeName || price.store || '',
-        productUrl: price.productUrl,
-        price: Number(price.price ?? price.currentPrice ?? 0),
-        currentPrice: Number(price.currentPrice ?? price.price ?? 0),
-        inStock:
-          typeof price.inStock === 'boolean'
-            ? price.inStock
-            : !String(price.availability ?? '')
-                .toLowerCase()
-                .includes('out of stock'),
-        availability:
-          price.availability ||
-          (typeof price.inStock === 'boolean'
-            ? price.inStock
-              ? 'Available'
-              : 'Out of Stock'
-            : 'Available'),
-        currency: price.currency ?? 'INR',
-        lastUpdated: new Date().toISOString(),
-      })),
+      data.prices.map((price) => {
+        const parsedPrice = Number(price.price ?? price.currentPrice);
+        const validPrice = Number.isFinite(parsedPrice) && parsedPrice > 0 ? parsedPrice : null;
+        return {
+          store: price.store || price.storeName || '',
+          storeName: price.storeName || price.store || '',
+          productUrl: price.productUrl,
+          price: validPrice,
+          currentPrice: validPrice,
+          ...(typeof price.inStock === 'boolean' ? { inStock: price.inStock } : {}),
+          availability:
+            price.availability ||
+            (typeof price.inStock === 'boolean'
+              ? price.inStock
+                ? 'In Stock'
+                : 'Out of Stock'
+              : 'Unknown'),
+          currency: price.currency ?? 'INR',
+          ...(price.lastUpdated ? { lastUpdated: price.lastUpdated } : {}),
+        };
+      }),
     ),
   );
 

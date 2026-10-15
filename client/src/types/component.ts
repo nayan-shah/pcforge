@@ -2,12 +2,14 @@ export interface PriceOffer {
   store?: string;
   storeName: string;
   productUrl: string;
-  price: number;
-  currentPrice?: number;
+  price?: number | null;
+  currentPrice?: number | null;
   currency?: string;
-  inStock: boolean;
+  inStock?: boolean | null;
   availability?: string;
-  lastUpdated?: string;
+  lastUpdated?: string | null;
+  stale?: boolean;
+  lastFetchError?: string | null;
 }
 
 export interface ComponentPriceComparisonResponse {
@@ -25,7 +27,7 @@ export type ComponentPriceFormEntry = {
   price?: number | '';
   currentPrice?: number | '';
   currency?: string;
-  inStock?: boolean;
+  inStock?: boolean | null;
   availability?: string;
   lastUpdated?: string;
 };

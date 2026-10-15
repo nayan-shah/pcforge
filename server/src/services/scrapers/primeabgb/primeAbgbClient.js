@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { RetailerFetchError } from '../retailerMarkup.js';
 
 /**
  * Fetches the full HTML of a PrimeABGB product detail page using
@@ -43,30 +44,29 @@ export async function fetchPrimeAbgbPageHtml(productUrl) {
 
     // Remove Playwright fingerprints.
     await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      Object.defineProperty(globalThis.navigator, 'webdriver', { get: () => undefined });
     });
 
     const page = await context.newPage();
 
     console.info('[PrimeABGB Client] Navigating to product page.', { url });
     const response = await page.goto(url, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_MS,
     });
 
     if (!response || response.status() >= 400) {
-      console.error('[PrimeABGB Client] Bad HTTP response.', {
-        status: response?.status(),
-        url,
-      });
-      return null;
+      throw new RetailerFetchError(
+        `PrimeABGB returned HTTP ${response?.status() ?? 'no response'}.`,
+        response?.status(),
+      );
     }
 
     // Wait for WooCommerce price element to render.
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page
       .waitForSelector('.woocommerce-Price-amount, p.price, .price', {
-        timeout: 10_000,
+        timeout: 5_000,
       })
       .catch(() => {
         console.warn('[PrimeABGB Client] Price selector timed out — returning available HTML.');
@@ -83,7 +83,7 @@ export async function fetchPrimeAbgbPageHtml(productUrl) {
       url,
       message: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   } finally {
     if (browser) await browser.close().catch(() => {});
   }

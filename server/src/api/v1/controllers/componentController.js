@@ -3,7 +3,11 @@ import Component from '../../../models/Component.js';
 import { deleteCloudinaryImages, getUploadedImageUrls } from '../middleware/uploadMiddleware.js';
 import { ApiError, notFound } from '../../../utils/apiError.js';
 import { sendSuccess } from '../../../utils/apiResponse.js';
-import { getLowestPrice, sortPricesLowToHigh, filterAvailableProducts } from '../../../services/priceComparisonService.js';
+import {
+  getLowestPrice,
+  sortPricesLowToHigh,
+  filterAvailableProducts,
+} from '../../../services/priceComparisonService.js';
 import { resolveSpecifications } from '../../../utils/specs.js';
 import { fetchLivePrices, getPrices } from '../../../services/priceService.js';
 
@@ -23,15 +27,35 @@ const parsePositiveInteger = (value, defaultValue, maximum) => {
   if (value === undefined) return defaultValue;
   const parsed = Number(value);
   if (!Number.isInteger(parsed) || parsed < 1 || (maximum && parsed > maximum)) {
-    throw new ApiError(400, `Provide a whole number between 1 and ${maximum || 'the allowed maximum'}.`);
+    throw new ApiError(
+      400,
+      `Provide a whole number between 1 and ${maximum || 'the allowed maximum'}.`,
+    );
   }
   return parsed;
 };
 
 const buildComponentPayload = (body, images) => {
-  const fields = ['name', 'brand', 'category', 'description', 'stockStatus', 'tags', 'specifications', 'compatibility', 'prices', 'rating', 'reviewCount'];
-  const payload = Object.fromEntries(fields.filter((field) => body[field] !== undefined).map((field) => [field, body[field]]).concat([['images', images]]));
-  
+  const fields = [
+    'name',
+    'brand',
+    'category',
+    'description',
+    'stockStatus',
+    'tags',
+    'specifications',
+    'compatibility',
+    'prices',
+    'rating',
+    'reviewCount',
+  ];
+  const payload = Object.fromEntries(
+    fields
+      .filter((field) => body[field] !== undefined)
+      .map((field) => [field, body[field]])
+      .concat([['images', images]]),
+  );
+
   // Auto-resolve specifications if missing or empty
   if (payload.name && payload.category) {
     const resolved = resolveSpecifications({
@@ -116,9 +140,12 @@ export const getAllComponents = async (req, res, next) => {
     if (brand?.trim()) filter.brand = new RegExp(`^${escapeRegex(brand.trim())}$`, 'i');
     if (minPrice !== undefined || maxPrice !== undefined) {
       const price = {};
-      if (minPrice !== undefined && (!Number.isFinite(Number(minPrice)) || Number(minPrice) < 0)) throw new ApiError(400, 'minPrice must be a non-negative number.');
-      if (maxPrice !== undefined && (!Number.isFinite(Number(maxPrice)) || Number(maxPrice) < 0)) throw new ApiError(400, 'maxPrice must be a non-negative number.');
-      if (Number(minPrice) > Number(maxPrice) && minPrice !== undefined && maxPrice !== undefined) throw new ApiError(400, 'minPrice cannot exceed maxPrice.');
+      if (minPrice !== undefined && (!Number.isFinite(Number(minPrice)) || Number(minPrice) < 0))
+        throw new ApiError(400, 'minPrice must be a non-negative number.');
+      if (maxPrice !== undefined && (!Number.isFinite(Number(maxPrice)) || Number(maxPrice) < 0))
+        throw new ApiError(400, 'maxPrice must be a non-negative number.');
+      if (Number(minPrice) > Number(maxPrice) && minPrice !== undefined && maxPrice !== undefined)
+        throw new ApiError(400, 'minPrice cannot exceed maxPrice.');
       if (minPrice !== undefined) price.$gte = Number(minPrice);
       if (maxPrice !== undefined) price.$lte = Number(maxPrice);
       filter['prices.price'] = price;
@@ -127,9 +154,14 @@ export const getAllComponents = async (req, res, next) => {
 
     const totalCount = await Component.countDocuments(filter);
     const totalPages = Math.ceil(totalCount / limit);
-    const components = page > Math.max(totalPages, 1)
-      ? []
-      : await Component.find(filter).sort(SORTS[sort]).skip((page - 1) * limit).limit(limit).lean();
+    const components =
+      page > Math.max(totalPages, 1)
+        ? []
+        : await Component.find(filter)
+            .sort(SORTS[sort])
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
 
     return sendSuccess(res, 200, 'Components fetched successfully.', {
       components,
@@ -162,11 +194,11 @@ export const getComponentPrices = async (req, res, next) => {
   try {
     if (!validId(req.params.id)) throw new ApiError(400, 'Invalid component ID.');
 
-    const component = await Component.findById(req.params.id).select('name prices').lean();
+    const component = await Component.findById(req.params.id).select('name').lean();
     if (!component) throw notFound('Component not found.');
 
-    // Normalize and sort real retailer prices only.
-    const multiStoreOffers = sortPricesLowToHigh(component.prices ?? []);
+    const prices = await getPrices(req.params.id);
+    const multiStoreOffers = sortPricesLowToHigh(prices ?? []);
     const availablePrices = filterAvailableProducts(multiStoreOffers);
     const cheapestPrice = getLowestPrice(multiStoreOffers);
 
@@ -227,10 +259,7 @@ export const getRelatedComponents = async (req, res, next) => {
 
     const related = await Component.find({
       _id: { $ne: req.params.id },
-      $or: [
-        { category: current.category },
-        { brand: current.brand },
-      ],
+      $or: [{ category: current.category }, { brand: current.brand }],
     })
       .sort({ rating: -1, createdAt: -1 })
       .limit(6)
@@ -250,8 +279,9 @@ export const updateComponent = async (req, res, next) => {
     if (!existing) throw notFound('Component not found.');
 
     const requestedKeptImages = req.body['existingImages[]'];
-    const keptImages = (Array.isArray(requestedKeptImages) ? requestedKeptImages : [requestedKeptImages])
-      .filter((url) => typeof url === 'string' && existing.images.includes(url));
+    const keptImages = (
+      Array.isArray(requestedKeptImages) ? requestedKeptImages : [requestedKeptImages]
+    ).filter((url) => typeof url === 'string' && existing.images.includes(url));
     const images = [...new Set([...keptImages, ...uploadedImages])];
     if (images.length > 5) throw new ApiError(400, 'A component can have at most 5 images.');
     const component = await Component.findByIdAndUpdate(

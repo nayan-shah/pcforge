@@ -1,327 +1,428 @@
-/**
- * priceService.js — Fetches live prices from Indian retailers for seeded
- * components using Playwright-based scrapers.
- *
- * Each component stores its retailer URLs inside the `prices[]` array
- * (priceSchema entries with `storeName` + `productUrl`). This service:
- *   1. Reads those URLs from the prices array.
- *   2. Scrapes each retailer page in parallel (with retry + exponential backoff).
- *   3. Updates the prices array in-place with fresh price/availability data.
- *   4. Respects per-store TTL to avoid unnecessary re-scrapes.
- */
-
 import Component from '../models/Component.js';
+import { scrapeMdComputersOffers } from './scrapers/mdcomputers/mdComputersService.js';
 import { fetchMdComputersPageHtml } from './scrapers/mdcomputers/mdComputersClient.js';
 import { parseMdComputersProductPrice } from './scrapers/mdcomputers/mdComputersParser.js';
+import { scrapeVedantOffers } from './scrapers/vedant/vedantService.js';
 import { fetchVedantPageHtml } from './scrapers/vedant/vedantClient.js';
 import { parseVedantProductPrice } from './scrapers/vedant/vedantParser.js';
+import { scrapePrimeAbgbOffers } from './scrapers/primeabgb/primeAbgbService.js';
 import { fetchPrimeAbgbPageHtml } from './scrapers/primeabgb/primeAbgbClient.js';
 import { parsePrimeAbgbProductPrice } from './scrapers/primeabgb/primeAbgbParser.js';
+import { scrapePcStudioOffers } from './scrapers/pcstudio/pcStudioService.js';
 import { fetchPcStudioPageHtml } from './scrapers/pcstudio/pcStudioClient.js';
 import { parsePcStudioProductPrice } from './scrapers/pcstudio/pcStudioParser.js';
-import { createPriceEntry } from './scrapers/adapters/offerContract.js';
-
-// ── Retailer configuration ────────────────────────────────────────────
-// Per-store TTL (cache freshness), scraper functions, and retry settings.
+import {
+  normalizeAvailability,
+  normalizeRetailerPrice,
+  RetailerFetchError,
+} from './scrapers/retailerMarkup.js';
+import {
+  getProductSearchQueries,
+  isDirectProductUrl,
+  isExactProductTitle,
+} from './scrapers/exactProductMatch.js';
 
 const RETAILER_CONFIG = {
   MDComputers: {
     ttlMinutes: 60,
     fetchHtml: fetchMdComputersPageHtml,
     parsePrice: parseMdComputersProductPrice,
-    retries: 2,
+    searchOffers: scrapeMdComputersOffers,
+    retries: 3,
+    baseUrl: 'https://www.mdcomputers.in',
   },
   Vedant: {
     ttlMinutes: 30,
     fetchHtml: fetchVedantPageHtml,
     parsePrice: parseVedantProductPrice,
-    retries: 2,
+    searchOffers: scrapeVedantOffers,
+    retries: 3,
+    baseUrl: 'https://www.vedantcomputers.com',
   },
   PrimeABGB: {
     ttlMinutes: 60,
     fetchHtml: fetchPrimeAbgbPageHtml,
     parsePrice: parsePrimeAbgbProductPrice,
-    retries: 2,
+    searchOffers: scrapePrimeAbgbOffers,
+    retries: 3,
+    baseUrl: 'https://www.primeabgb.com',
   },
   PCStudio: {
     ttlMinutes: 30,
     fetchHtml: fetchPcStudioPageHtml,
     parsePrice: parsePcStudioProductPrice,
-    retries: 2,
+    searchOffers: scrapePcStudioOffers,
+    retries: 3,
+    baseUrl: 'https://www.pcstudio.in',
   },
 };
 
-const RETRY_BASE_DELAY_MS = 2000;
-
-// ── Helpers ────────────────────────────────────────────────────────────
+const REQUEST_DELAY_MS = 1000;
+const RETRY_BASE_DELAY_MS = 1000;
+const FAILED_FETCH_COOLDOWN_MS = 15 * 60 * 1000;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/**
- * Checks whether a cached price entry is still fresh.
- *
- * @param {object} priceEntry — Stored price entry from component.prices[]
- * @param {number} ttlMinutes — Maximum age in minutes before considered stale.
- * @returns {boolean}
- */
-const isFresh = (priceEntry, ttlMinutes) => {
-  if (!priceEntry || !priceEntry.lastUpdated) return false;
-  const ageMs = Date.now() - new Date(priceEntry.lastUpdated).getTime();
-  return ageMs < ttlMinutes * 60 * 1000;
-};
-
-/**
- * Resolves the store name from a price entry to a RETAILER_CONFIG key.
- * Handles common variations (e.g. "Vedant Computers" → "Vedant").
- *
- * @param {string} storeName — The storeName from a price entry.
- * @returns {string | null} — Matching RETAILER_CONFIG key, or null.
- */
 const resolveConfigKey = (storeName) => {
   if (!storeName) return null;
   const lower = storeName.toLowerCase().replace(/[^a-z0-9]/g, '');
-  for (const key of Object.keys(RETAILER_CONFIG)) {
-    if (lower.includes(key.toLowerCase().replace(/[^a-z0-9]/g, ''))) return key;
-  }
-  return null;
+  return (
+    Object.keys(RETAILER_CONFIG).find((key) =>
+      lower.includes(key.toLowerCase().replace(/[^a-z0-9]/g, '')),
+    ) ?? null
+  );
 };
 
-/**
- * Scrapes a single retailer with retry logic.
- *
- * @param {string} configKey — Key in RETAILER_CONFIG (e.g. "MDComputers")
- * @param {string} productUrl — Direct URL to the product page
- * @returns {Promise<{ price: number|null, availability: string, lastUpdated: Date, error: string|null, isValid: boolean }>}
- */
-async function scrapeWithRetry(configKey, productUrl) {
-  const config = RETAILER_CONFIG[configKey];
-  if (!config) {
-    return {
-      price: null,
-      availability: 'Unknown',
-      lastUpdated: new Date(),
-      error: `No scraper configured for "${configKey}".`,
-      isValid: false,
-    };
-  }
+const describeFetchFailure = (error) => {
+  const statusCode = error?.statusCode;
+  if (statusCode === 404 || statusCode === 410)
+    return `bad URL: retailer returned HTTP ${statusCode}`;
+  if (statusCode === 403 || statusCode === 429)
+    return `blocked: retailer returned HTTP ${statusCode}`;
+  if (statusCode >= 400) return `fetch failed: retailer returned HTTP ${statusCode}`;
+  return error instanceof Error ? error.message : String(error);
+};
 
+const shouldRetry = (error) => {
+  if (error instanceof RetailerFetchError && !error.statusCode) return false;
+  return !error?.statusCode || error.statusCode === 429 || error.statusCode >= 500;
+};
+
+const fetchProduct = async (configKey, component, productUrl, trustedSearchTitle = '') => {
+  const config = RETAILER_CONFIG[configKey];
   let lastError = null;
 
   for (let attempt = 1; attempt <= config.retries; attempt++) {
     try {
-      console.info(`[PriceService] Scraping ${configKey} (attempt ${attempt}/${config.retries}).`, { productUrl });
-
       const html = await config.fetchHtml(productUrl);
-      if (!html) {
-        throw new Error('Empty HTML response from retailer.');
+      if (!html) throw new Error('Empty HTML response from retailer.');
+
+      const result = config.parsePrice(html) ?? {};
+      const price = normalizeRetailerPrice(result.price);
+      const productName = result.productName || trustedSearchTitle;
+
+      if (
+        /welcome back|captcha|access denied|verify (?:you are|your)|security check/i.test(
+          productName,
+        )
+      ) {
+        throw new RetailerFetchError('blocked: retailer served an access or challenge page');
+      }
+      if (!productName) {
+        throw new Error('parse failure: product title was not present in the page markup');
+      }
+      if (!isExactProductTitle(component.name, component.brand, productName)) {
+        throw new RetailerFetchError(
+          'bad URL: product title does not match the exact component model',
+        );
+      }
+      if (!price) {
+        throw new Error('parse failure: no positive product price was found');
       }
 
-      const result = config.parsePrice(html);
-      const entry = createPriceEntry(configKey, result);
-
-      if (entry.isValid) {
-        console.info(`[PriceService] ${configKey} scraped successfully.`, {
-          price: entry.price,
-          availability: entry.availability,
-        });
-        return entry;
-      }
-
-      // Parsed but invalid (e.g., price was 0 or missing).
-      lastError = entry.error || 'Parsed result was invalid.';
-      console.warn(`[PriceService] ${configKey} returned invalid data on attempt ${attempt}.`, { error: lastError });
-    } catch (err) {
-      lastError = err instanceof Error ? err.message : String(err);
-      console.error(`[PriceService] ${configKey} attempt ${attempt} failed.`, { error: lastError });
-    }
-
-    // Exponential backoff before retry (skip delay on last attempt).
-    if (attempt < config.retries) {
-      const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt - 1);
-      console.info(`[PriceService] Retrying ${configKey} in ${delay}ms...`);
+      const availability = normalizeAvailability(result.availability);
+      return {
+        price,
+        availability,
+        inStock:
+          availability === 'In Stock' ? true : availability === 'Out of Stock' ? false : null,
+        lastUpdated: new Date(),
+        productUrl,
+        error: null,
+      };
+    } catch (error) {
+      lastError = error;
+      if (attempt >= config.retries || !shouldRetry(error)) break;
+      const delay = RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+      console.warn(`[PriceService] Retrying ${configKey} in ${delay}ms.`, {
+        productUrl,
+        error: describeFetchFailure(error),
+      });
       await sleep(delay);
     }
   }
 
-  // All retries exhausted — return error entry.
-  return {
-    price: null,
-    availability: 'Unknown',
-    lastUpdated: new Date(),
-    error: lastError || 'All retry attempts failed.',
-    isValid: false,
-  };
-}
+  return { error: describeFetchFailure(lastError) };
+};
 
-// ── Public API ─────────────────────────────────────────────────────────
+const asDirectUrl = (configKey, config, candidateUrl) => {
+  try {
+    const absoluteUrl = new URL(candidateUrl, config.baseUrl).toString();
+    return isDirectProductUrl(configKey, absoluteUrl) ? absoluteUrl : null;
+  } catch {
+    return null;
+  }
+};
 
-/**
- * Fetches live prices for a component from all configured retailers.
- * Reads product URLs from the component's `prices[]` array entries.
- * Updates the prices array in MongoDB with fresh scraped data.
- *
- * @param {string} componentId — MongoDB ObjectId of the component.
- * @returns {Promise<object[]>} — Updated prices array.
- */
+const fetchSearchOffers = async (configKey, config, query) => {
+  for (let attempt = 1; attempt <= config.retries; attempt++) {
+    try {
+      return await config.searchOffers(query);
+    } catch (error) {
+      if (attempt >= config.retries || !shouldRetry(error)) throw error;
+      const delay = RETRY_BASE_DELAY_MS * 2 ** (attempt - 1);
+      console.warn(`[PriceService] Retrying ${configKey} search in ${delay}ms.`, {
+        query,
+        error: describeFetchFailure(error),
+      });
+      await sleep(delay);
+    }
+  }
+  throw new Error(`All ${configKey} search attempts completed without a result.`);
+};
+
+const findExactSearchResult = async (configKey, component) => {
+  const config = RETAILER_CONFIG[configKey];
+  const queries = getProductSearchQueries(component.name);
+
+  for (let index = 0; index < queries.length; index++) {
+    if (index > 0) await sleep(REQUEST_DELAY_MS);
+    const offers = await fetchSearchOffers(configKey, config, queries[index]);
+    const match = offers
+      .filter((offer) => isExactProductTitle(component.name, component.brand, offer.productName))
+      .map((offer) => ({
+        offer,
+        productUrl: asDirectUrl(configKey, config, offer.productUrl),
+      }))
+      .find((candidate) => candidate.productUrl);
+    if (match) return match;
+  }
+  return null;
+};
+
+const scrapeWithRecovery = async (configKey, component, productUrl) => {
+  const originalUrl = String(productUrl ?? '').trim();
+  let initialError = 'bad URL: no product URL was stored';
+
+  if (isDirectProductUrl(configKey, originalUrl)) {
+    const directResult = await fetchProduct(configKey, component, originalUrl);
+    if (!directResult.error) return directResult;
+    initialError = directResult.error;
+  } else if (originalUrl) {
+    initialError = 'bad URL: stored URL is not a direct product page';
+  }
+
+  try {
+    await sleep(REQUEST_DELAY_MS);
+    const match = await findExactSearchResult(configKey, component);
+    if (!match) {
+      console.warn(
+        `[PriceService] No exact-model URL found for ${configKey} "${component.name}".`,
+        {
+          productUrl: originalUrl || null,
+          reason: `${initialError}; no exact-model search result was found`,
+        },
+      );
+      return {
+        error: `${initialError}; no exact-model search result was found`,
+      };
+    }
+
+    console.info(
+      `[PriceService] Found an exact-model ${configKey} product URL candidate for "${component.name}".`,
+      {
+        oldUrl: originalUrl || null,
+        newUrl: match.productUrl,
+        matchedTitle: match.offer.productName,
+      },
+    );
+
+    await sleep(REQUEST_DELAY_MS);
+    const verifiedResult = await fetchProduct(
+      configKey,
+      component,
+      match.productUrl,
+      match.offer.productName,
+    );
+    const candidateUrlFailed =
+      verifiedResult.error?.includes('title does not match') ||
+      verifiedResult.error?.includes('HTTP 404') ||
+      verifiedResult.error?.includes('HTTP 410');
+    if (candidateUrlFailed) {
+      console.warn(
+        `[PriceService] Could not verify the ${configKey} URL candidate for "${component.name}".`,
+        {
+          oldUrl: originalUrl || null,
+          candidateUrl: match.productUrl,
+          reason: verifiedResult.error,
+        },
+      );
+    }
+
+    return {
+      ...verifiedResult,
+      productUrl: candidateUrlFailed ? null : match.productUrl,
+    };
+  } catch (error) {
+    console.warn(
+      `[PriceService] Exact-model URL search failed for ${configKey} "${component.name}".`,
+      {
+        productUrl: originalUrl || null,
+        reason: describeFetchFailure(error),
+      },
+    );
+    return {
+      error: `${initialError}; exact-model search failed: ${describeFetchFailure(error)}`,
+    };
+  }
+};
+
+const hasPositivePrice = (entry) => {
+  return [entry?.price, entry?.currentPrice].some((value) => {
+    const price = Number(value);
+    return Number.isFinite(price) && price > 0;
+  });
+};
+
+const hasRecentFailedAttempt = (entry) => {
+  if (!entry?.lastFetchError || !entry?.lastAttemptAt) return false;
+  const age = Date.now() - new Date(entry.lastAttemptAt).getTime();
+  return age >= 0 && age < FAILED_FETCH_COOLDOWN_MS;
+};
+
+const isFresh = (entry, ttlMinutes) => {
+  if (!hasPositivePrice(entry) || entry.stale || !entry.lastUpdated) return false;
+  const age = Date.now() - new Date(entry.lastUpdated).getTime();
+  return age >= 0 && age < ttlMinutes * 60 * 1000;
+};
+
 export async function fetchLivePrices(componentId) {
   const component = await Component.findById(componentId);
   if (!component) throw new Error(`Component not found: ${componentId}`);
 
   const existingPrices = component.prices || [];
+  const scrapeTargets = existingPrices
+    .map((entry, index) => ({
+      index,
+      configKey: resolveConfigKey(entry.storeName || entry.store),
+      productUrl: entry.productUrl,
+    }))
+    .filter((target) => target.configKey);
 
-  // Build a map: configKey → { index in prices[], productUrl }
-  const scrapeTargets = [];
-  for (let i = 0; i < existingPrices.length; i++) {
-    const entry = existingPrices[i];
-    const configKey = resolveConfigKey(entry.storeName || entry.store);
-    if (configKey && entry.productUrl) {
-      scrapeTargets.push({ index: i, configKey, productUrl: entry.productUrl });
-    }
-  }
+  for (let index = 0; index < scrapeTargets.length; index++) {
+    const target = scrapeTargets[index];
+    if (index > 0) await sleep(REQUEST_DELAY_MS);
 
-  if (scrapeTargets.length === 0) {
-    console.warn(`[PriceService] No scrapeable retailer URLs found for "${component.name}".`);
-    return existingPrices;
-  }
+    const entry = existingPrices[target.index];
+    const scraped = await scrapeWithRecovery(target.configKey, component, target.productUrl);
+    entry.lastAttemptAt = new Date();
 
-  console.info(`[PriceService] Scraping ${scrapeTargets.length} retailers for "${component.name}"...`);
-
-  // Scrape all retailers in parallel.
-  const results = await Promise.allSettled(
-    scrapeTargets.map(async (target) => {
-      const scraped = await scrapeWithRetry(target.configKey, target.productUrl);
-      return { ...target, scraped };
-    }),
-  );
-
-  // Update prices array entries in-place with scraped data.
-  for (const result of results) {
-    if (result.status !== 'fulfilled') {
-      console.error('[PriceService] Unexpected settlement failure.', {
-        reason: result.reason,
-      });
-      continue;
-    }
-
-    const { index, configKey, scraped } = result.value;
-    const priceEntry = existingPrices[index];
-
-    if (scraped.isValid) {
-      priceEntry.price = scraped.price;
-      priceEntry.currentPrice = scraped.price;
-      priceEntry.inStock = scraped.availability !== 'Out of Stock';
-      priceEntry.availability = scraped.availability;
-      priceEntry.lastUpdated = scraped.lastUpdated;
+    if (scraped.price && scraped.price > 0) {
+      entry.price = scraped.price;
+      entry.currentPrice = scraped.price;
+      entry.inStock = scraped.inStock;
+      entry.availability = scraped.availability;
+      entry.lastUpdated = scraped.lastUpdated;
+      entry.stale = false;
+      entry.lastFetchError = null;
     } else {
-      // Keep the existing price but mark as stale with the error.
-      priceEntry.lastUpdated = scraped.lastUpdated;
-      // Don't overwrite a valid cached price — just update the timestamp.
-      console.warn(`[PriceService] ${configKey} scrape failed, keeping cached price.`, {
-        cachedPrice: priceEntry.price,
-        error: scraped.error,
+      const lastKnownGoodPrice = [entry.price, entry.currentPrice]
+        .map(Number)
+        .find((price) => Number.isFinite(price) && price > 0);
+      if (lastKnownGoodPrice == null) {
+        entry.price = null;
+        entry.currentPrice = null;
+        entry.lastUpdated = null;
+      } else {
+        entry.price = lastKnownGoodPrice;
+        entry.currentPrice = lastKnownGoodPrice;
+      }
+      entry.inStock = null;
+      entry.availability = 'Unknown';
+      entry.stale = true;
+      entry.lastFetchError = scraped.error || 'parse failure: no valid price was returned';
+      console.warn(`[PriceService] ${target.configKey} refresh failed for "${component.name}".`, {
+        productUrl: target.productUrl,
+        reason: entry.lastFetchError,
       });
+    }
+
+    if (scraped.productUrl) entry.productUrl = scraped.productUrl;
+    else if (scraped.error?.includes('no exact-model search result')) {
+      console.warn(
+        `[PriceService] No exact-model URL found for ${target.configKey} "${component.name}".`,
+        {
+          productUrl: target.productUrl || null,
+          reason: scraped.error,
+        },
+      );
     }
   }
 
-  // Persist updates.
   component.prices = existingPrices;
   component.markModified('prices');
   await component.save();
-
-  console.info(`[PriceService] Prices updated for "${component.name}".`, {
-    retailers: scrapeTargets.length,
-    componentId,
-  });
-
   return component.prices;
 }
 
-/**
- * Gets cached prices for a component, refreshing if stale.
- *
- * @param {string} componentId — MongoDB ObjectId.
- * @param {{ forceRefresh?: boolean }} options
- * @returns {Promise<object[]>} — Prices array.
- */
 export async function getPrices(componentId, options = {}) {
   const { forceRefresh = false } = options;
-
-  if (forceRefresh) {
-    return fetchLivePrices(componentId);
-  }
-
   const component = await Component.findById(componentId).lean();
   if (!component) throw new Error(`Component not found: ${componentId}`);
 
   const existingPrices = component.prices || [];
+  const shouldRefresh =
+    forceRefresh ||
+    existingPrices.some((entry) => {
+      const configKey = resolveConfigKey(entry.storeName || entry.store);
+      if (!configKey || isFresh(entry, RETAILER_CONFIG[configKey].ttlMinutes)) return false;
+      return !hasRecentFailedAttempt(entry);
+    });
 
-  // Check if any tracked retailer's price is stale.
-  const hasStaleEntries = existingPrices.some((entry) => {
-    const configKey = resolveConfigKey(entry.storeName || entry.store);
-    if (!configKey) return false;
-    const config = RETAILER_CONFIG[configKey];
-    return !isFresh(entry, config.ttlMinutes);
-  });
-
-  if (hasStaleEntries) {
-    console.info(`[PriceService] Stale prices detected for component ${componentId}. Refreshing...`);
-    return fetchLivePrices(componentId);
-  }
-
-  return existingPrices;
+  return shouldRefresh ? fetchLivePrices(componentId) : existingPrices;
 }
 
-/**
- * Force-refreshes prices for all components that have retailer URLs.
- * Processes in batches to avoid overwhelming scrapers.
- *
- * @param {{ batchSize?: number, delayBetweenBatchesMs?: number }} options
- * @returns {Promise<{ succeeded: number, failed: number, total: number }>}
- */
 export async function refreshAllPrices(options = {}) {
-  const { batchSize = 3, delayBetweenBatchesMs = 5000 } = options;
-
-  // Find components that have at least one price entry with a productUrl.
-  const components = await Component.find({
-    'prices.productUrl': { $exists: true, $ne: '' },
+  const { limit = 0 } = options;
+  const query = Component.find({
+    'prices.0': { $exists: true },
   })
-    .select('_id name')
-    .lean();
+    .select('_id name category prices')
+    .sort({ _id: 1 });
+  if (limit > 0) query.limit(limit);
+  const components = await query.lean();
 
-  console.info(`[PriceService] Bulk refresh starting for ${components.length} components.`);
+  const perRetailer = Object.fromEntries(
+    Object.keys(RETAILER_CONFIG).map((store) => [store, { fetched: 0, failed: 0 }]),
+  );
+  const unavailable = [];
 
-  let succeeded = 0;
-  let failed = 0;
-
-  for (let i = 0; i < components.length; i += batchSize) {
-    const batch = components.slice(i, i + batchSize);
-
-    await Promise.allSettled(
-      batch.map(async (comp) => {
-        try {
-          await fetchLivePrices(comp._id);
-          succeeded++;
-        } catch (err) {
-          console.error(`[PriceService] Bulk refresh failed for "${comp.name}".`, {
-            error: err instanceof Error ? err.message : String(err),
-          });
-          failed++;
+  for (let index = 0; index < components.length; index++) {
+    const component = components[index];
+    try {
+      const updatedPrices = await fetchLivePrices(component._id);
+      for (const entry of updatedPrices) {
+        const configKey = resolveConfigKey(entry.storeName || entry.store);
+        if (!configKey) continue;
+        if (hasPositivePrice(entry) && !entry.stale) {
+          perRetailer[configKey].fetched++;
+        } else {
+          perRetailer[configKey].failed++;
+          if (!hasPositivePrice(entry)) {
+            unavailable.push({
+              component: component.name,
+              retailer: configKey,
+              reason: entry.lastFetchError || 'parse failure: no positive price is stored',
+            });
+          }
         }
-      }),
-    );
-
-    // Pause between batches to be polite to retailers.
-    if (i + batchSize < components.length) {
-      await sleep(delayBetweenBatchesMs);
+      }
+    } catch (error) {
+      for (const entry of component.prices ?? []) {
+        const configKey = resolveConfigKey(entry.storeName || entry.store);
+        if (!configKey) continue;
+        perRetailer[configKey].failed++;
+        unavailable.push({
+          component: component.name,
+          retailer: configKey,
+          reason: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
+    if (index + 1 < components.length) await sleep(REQUEST_DELAY_MS);
   }
 
-  console.info(`[PriceService] Bulk refresh complete.`, {
-    succeeded,
-    failed,
-    total: components.length,
-  });
-  return { succeeded, failed, total: components.length };
+  return { componentsProcessed: components.length, perRetailer, unavailable };
 }
 
 export default { fetchLivePrices, getPrices, refreshAllPrices };

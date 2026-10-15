@@ -1,10 +1,17 @@
 import { load } from 'cheerio';
+import {
+  normalizeAvailability,
+  normalizeRetailerPrice,
+  parseRetailerProductMarkup,
+} from '../retailerMarkup.js';
 
-const text = (v) => String(v ?? '').replace(/\s+/g, ' ').trim();
+const text = (v) =>
+  String(v ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const parsePrice = (v) => {
-  const n = Number(text(v).replace(/[^0-9.,]/g, '').replace(/,/g, ''));
-  return Number.isFinite(n) && n > 0 ? n : null;
+  return normalizeRetailerPrice(v);
 };
 
 /**
@@ -12,16 +19,11 @@ const parsePrice = (v) => {
  */
 const getAvailability = ($) => {
   const el = $('.stock, .availability, [class*="stock-status"]').first();
-  if (el.hasClass('out-of-stock') || /out.of.stock|unavailable|sold.out/i.test(el.text())) {
-    return 'Out of Stock';
-  }
-  if (el.hasClass('in-stock') || /in.stock|available/i.test(el.text())) {
-    return 'In Stock';
-  }
+  const availability = normalizeAvailability(`${el.attr('class') ?? ''} ${text(el.text())}`);
+  if (availability !== 'Unknown') return availability;
 
-  // WooCommerce "Add to cart" button presence implies in stock.
   const hasAddToCart = $('button.single_add_to_cart_button, .add_to_cart_button').length > 0;
-  return hasAddToCart ? 'In Stock' : 'Unknown';
+  return hasAddToCart ? normalizeAvailability('Add to Cart') : 'Unknown';
 };
 
 /**
@@ -42,21 +44,29 @@ export function parsePcStudioProductPrice(html) {
 
   try {
     const $ = load(html);
+    const markup = parseRetailerProductMarkup(html);
 
     // Prefer discounted sale price, fall back to regular.
-    const salePriceText = text($('p.price ins .woocommerce-Price-amount, .summary ins .woocommerce-Price-amount').first().text());
-    const regularPriceText = text($('p.price > .woocommerce-Price-amount, .summary > .price .woocommerce-Price-amount').first().text());
+    const salePriceText = text(
+      $('p.price ins .woocommerce-Price-amount, .summary ins .woocommerce-Price-amount')
+        .first()
+        .text(),
+    );
+    const regularPriceText = text(
+      $('p.price > .woocommerce-Price-amount, .summary > .price .woocommerce-Price-amount')
+        .first()
+        .text(),
+    );
     const anyPriceText = text($('.woocommerce-Price-amount').first().text());
 
     const price =
-      parsePrice(salePriceText) ||
-      parsePrice(regularPriceText) ||
-      parsePrice(anyPriceText);
+      parsePrice(salePriceText) || parsePrice(regularPriceText) || parsePrice(anyPriceText);
 
-    const availability = getAvailability($);
+    const availability =
+      markup.availability !== 'Unknown' ? markup.availability : getAvailability($);
 
     console.info('[PCStudio Parser] Parsed product page.', { price, availability });
-    return { price, availability };
+    return { price: price ?? markup.price, availability, productName: markup.productName };
   } catch (error) {
     console.error('[PCStudio Parser] Failed to parse product page.', {
       message: error instanceof Error ? error.message : String(error),
@@ -82,14 +92,30 @@ export function parsePcStudioSearchHtml(html) {
     // PCStudio uses WooCommerce — product cards in search/archive pages.
     $('li.product, .product-grid-item, .products .product').each((_, el) => {
       const $el = $(el);
-      const name = text($el.find('.woocommerce-loop-product__title, h2, .product-title a').first().text());
-      const priceText = text($el.find('.price ins .woocommerce-Price-amount, .price .woocommerce-Price-amount').first().text());
+      const name = text(
+        $el.find('.woocommerce-loop-product__title, h2, .product-title a').first().text(),
+      );
+      const priceText = text(
+        $el
+          .find('.price ins .woocommerce-Price-amount, .price .woocommerce-Price-amount')
+          .first()
+          .text(),
+      );
       const link = $el.find('a.woocommerce-LoopProduct-link, a').first().attr('href') || '';
       const imageUrl = $el.find('img').first().attr('src') || '';
+      const stockText = text($el.find('.stock, .availability, [class*="stock"]').first().text());
+      const actionText = text($el.find('button, a').text());
 
       const price = parsePrice(priceText);
       if (name && price) {
-        products.push({ product_name: name, sale_price: price, currency_code: 'INR', link, image_url: imageUrl, stock: 'In Stock' });
+        products.push({
+          product_name: name,
+          sale_price: price,
+          currency_code: 'INR',
+          link,
+          image_url: imageUrl,
+          stock: normalizeAvailability(stockText || actionText),
+        });
       }
     });
 

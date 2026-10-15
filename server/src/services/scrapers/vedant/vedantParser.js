@@ -1,10 +1,17 @@
 import { load } from 'cheerio';
+import {
+  normalizeAvailability,
+  normalizeRetailerPrice,
+  parseRetailerProductMarkup,
+} from '../retailerMarkup.js';
 
-const text = (value) => String(value ?? '').replace(/\s+/g, ' ').trim();
+const text = (value) =>
+  String(value ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 const parsePrice = (value) => {
-  const parsed = Number(text(value).replace(/[^0-9.,]/g, '').replace(/,/g, ''));
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  return normalizeRetailerPrice(value);
 };
 
 /**
@@ -12,13 +19,14 @@ const parsePrice = (value) => {
  */
 const getAvailability = ($) => {
   const stockEl = $('.stock, .availability, .stock-status, [class*="stock"]').first();
-  const stockText = text(stockEl.text());
-  if (/out.of.stock|unavailable|sold.out/i.test(stockText)) return 'Out of Stock';
-  if (/in.stock|available/i.test(stockText)) return 'In Stock';
+  const availability = normalizeAvailability(
+    `${stockEl.attr('class') ?? ''} ${text(stockEl.text())}`,
+  );
+  if (availability !== 'Unknown') return availability;
 
-  // OpenCart "Add to Cart" button presence implies in stock.
-  const hasAddToCart = $('#button-cart, [id*="button-cart"], .btn-cart, input[value*="Add to Cart"]').length > 0;
-  return hasAddToCart ? 'In Stock' : 'Unknown';
+  const hasAddToCart =
+    $('#button-cart, [id*="button-cart"], .btn-cart, input[value*="Add to Cart"]').length > 0;
+  return hasAddToCart ? normalizeAvailability('Add to Cart') : 'Unknown';
 };
 
 /**
@@ -39,6 +47,7 @@ export function parseVedantProductPrice(html) {
 
   try {
     const $ = load(html);
+    const markup = parseRetailerProductMarkup(html);
 
     // Prefer sale/discounted price, fall back to any price element.
     const salePriceText = text($('.price-new, #product-price .price-new').first().text());
@@ -46,14 +55,13 @@ export function parseVedantProductPrice(html) {
     const anyPriceText = text($('.product-price, #product-price, .price').first().text());
 
     const price =
-      parsePrice(salePriceText) ||
-      parsePrice(regularPriceText) ||
-      parsePrice(anyPriceText);
+      parsePrice(salePriceText) || parsePrice(regularPriceText) || parsePrice(anyPriceText);
 
-    const availability = getAvailability($);
+    const availability =
+      markup.availability !== 'Unknown' ? markup.availability : getAvailability($);
 
     console.info('[Vedant Parser] Parsed product page.', { price, availability });
-    return { price, availability };
+    return { price: price ?? markup.price, availability, productName: markup.productName };
   } catch (error) {
     console.error('[Vedant Parser] Failed to parse product page.', {
       message: error instanceof Error ? error.message : String(error),
@@ -77,16 +85,33 @@ export function parseVedantSearchHtml(html) {
     const products = [];
 
     // Vedant uses OpenCart Journal3 theme — product cards in search results.
-    $('.product-layout, .product-thumb, .product-grid .product-item, .main-products .product-item-container').each((_, el) => {
+    $(
+      '.product-layout, .product-thumb, .product-grid .product-item, .main-products .product-item-container',
+    ).each((_, el) => {
       const $el = $(el);
       const name = text($el.find('.name a, .product-name a, h4 a, .caption h4 a').first().text());
-      const priceText = text($el.find('.price-new, .price, .product-price').first().text());
-      const url = $el.find('.name a, .product-name a, h4 a, .caption h4 a').first().attr('href') || '';
-      const image = $el.find('img.img-responsive, img').first().attr('src') || $el.find('img').first().attr('data-src') || '';
+      const priceText = text(
+        $el.find('.price-new').first().text() || $el.find('.product-price, .price').first().text(),
+      );
+      const url =
+        $el.find('.name a, .product-name a, h4 a, .caption h4 a').first().attr('href') || '';
+      const image =
+        $el.find('img.img-responsive, img').first().attr('src') ||
+        $el.find('img').first().attr('data-src') ||
+        '';
+      const stockText = text($el.find('.stock, .availability, [class*="stock"]').first().text());
+      const actionText = text($el.find('button, a').text());
 
       const price = parsePrice(priceText);
       if (name && price) {
-        products.push({ name, price, currency: 'INR', url, image, itemStatus: 'In Stock' });
+        products.push({
+          name,
+          price,
+          currency: 'INR',
+          url,
+          image,
+          itemStatus: normalizeAvailability(stockText || actionText),
+        });
       }
     });
 

@@ -62,22 +62,38 @@ export default function ComponentDetailsModal({
 
   const prices = component.prices || [];
   const sortedPrices = [...prices].sort((a, b) => {
-    const priceA = a.currentPrice ?? a.price ?? Infinity;
-    const priceB = b.currentPrice ?? b.price ?? Infinity;
+    const priceA = a.currentPrice ?? a.price;
+    const priceB = b.currentPrice ?? b.price;
+    const validA = priceA != null && Number.isFinite(priceA) && priceA > 0;
+    const validB = priceB != null && Number.isFinite(priceB) && priceB > 0;
+    if (!validA) return validB ? 1 : 0;
+    if (!validB) return -1;
     return priceA - priceB;
   });
 
-  const lowestPriceOffer = sortedPrices.length > 0 ? sortedPrices[0] : null;
-  const lowestPrice = lowestPriceOffer ? (lowestPriceOffer.currentPrice ?? lowestPriceOffer.price ?? 0) : null;
-  const inStockCount = prices.filter((p) => p.inStock !== false).length;
+  const lowestPriceOffer =
+    sortedPrices.find((offer) => {
+      const price = offer.currentPrice ?? offer.price;
+      return price != null && Number.isFinite(price) && price > 0 && offer.inStock !== false;
+    }) ?? null;
+  const lowestPrice = lowestPriceOffer
+    ? (lowestPriceOffer.currentPrice ?? lowestPriceOffer.price ?? null)
+    : null;
+  const inStockCount = prices.filter((price) => price.inStock === true).length;
 
-  const specifications = component.specifications && typeof component.specifications === 'object'
-    ? Object.entries(component.specifications).filter(([_, val]) => val !== undefined && val !== null && val !== '')
-    : [];
+  const specifications =
+    component.specifications && typeof component.specifications === 'object'
+      ? Object.entries(component.specifications).filter(
+          ([_, val]) => val !== undefined && val !== null && val !== '',
+        )
+      : [];
 
-  const compatibilityEntries = component.compatibility && typeof component.compatibility === 'object'
-    ? Object.entries(component.compatibility).filter(([_, val]) => val !== undefined && val !== null && val !== '')
-    : [];
+  const compatibilityEntries =
+    component.compatibility && typeof component.compatibility === 'object'
+      ? Object.entries(component.compatibility).filter(
+          ([_, val]) => val !== undefined && val !== null && val !== '',
+        )
+      : [];
 
   const handleCopyId = () => {
     if (navigator.clipboard) {
@@ -88,7 +104,11 @@ export default function ComponentDetailsModal({
   };
 
   const statusColors: Record<string, { bg: string; text: string; dot: string }> = {
-    'In Stock': { bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500' },
+    'In Stock': {
+      bg: 'bg-emerald-50 border-emerald-200',
+      text: 'text-emerald-700',
+      dot: 'bg-emerald-500',
+    },
     'Out of Stock': { bg: 'bg-rose-50 border-rose-200', text: 'text-rose-700', dot: 'bg-rose-500' },
     Preorder: { bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700', dot: 'bg-amber-500' },
   };
@@ -118,11 +138,7 @@ export default function ComponentDetailsModal({
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-xs">
               {currentImage ? (
-                <img
-                  src={currentImage}
-                  alt={component.name}
-                  className="h-10 w-10 object-contain"
-                />
+                <img src={currentImage} alt={component.name} className="h-10 w-10 object-contain" />
               ) : (
                 <CategoryIcon category={component.category} className="h-6 w-6 text-slate-500" />
               )}
@@ -212,9 +228,7 @@ export default function ComponentDetailsModal({
             Store Offers
             <span
               className={`rounded-full px-1.5 py-0.2 font-mono text-[10px] ${
-                activeTab === 'pricing'
-                  ? 'bg-slate-950 text-white'
-                  : 'bg-slate-100 text-slate-600'
+                activeTab === 'pricing' ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-600'
               }`}
             >
               {prices.length}
@@ -267,7 +281,9 @@ export default function ComponentDetailsModal({
                     ) : (
                       <div className="flex flex-col items-center justify-center text-slate-300">
                         <HiOutlinePhoto className="h-10 w-10 mb-1" />
-                        <span className="font-mono text-[10px] text-slate-400">No image available</span>
+                        <span className="font-mono text-[10px] text-slate-400">
+                          No image available
+                        </span>
                       </div>
                     )}
                   </div>
@@ -286,7 +302,11 @@ export default function ComponentDetailsModal({
                               : 'border-slate-200 hover:border-slate-300'
                           }`}
                         >
-                          <img src={img} alt={`Thumbnail ${idx + 1}`} className="h-full w-full object-contain" />
+                          <img
+                            src={img}
+                            alt={`Thumbnail ${idx + 1}`}
+                            className="h-full w-full object-contain"
+                          />
                         </button>
                       ))}
                     </div>
@@ -304,7 +324,8 @@ export default function ComponentDetailsModal({
                         component.description
                       ) : (
                         <span className="italic text-slate-400">
-                          No text description provided. You can add one anytime by clicking &quot;Edit&quot;.
+                          No text description provided. You can add one anytime by clicking
+                          &quot;Edit&quot;.
                         </span>
                       )}
                     </p>
@@ -472,9 +493,17 @@ export default function ComponentDetailsModal({
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-xs">
                         {sortedPrices.map((offer, idx) => {
-                          const isCheapest = idx === 0 && (offer.currentPrice ?? offer.price ?? 0) > 0;
-                          const offerPrice = offer.currentPrice ?? offer.price ?? 0;
-                          const isAvailable = offer.inStock !== false;
+                          const rawPrice = offer.currentPrice ?? offer.price;
+                          const offerPrice =
+                            rawPrice != null && Number.isFinite(rawPrice) && rawPrice > 0
+                              ? rawPrice
+                              : null;
+                          const isCheapest =
+                            lowestPriceOffer != null &&
+                            lowestPrice != null &&
+                            offerPrice === lowestPrice &&
+                            offer.productUrl === lowestPriceOffer.productUrl;
+                          const isAvailable = offer.inStock;
 
                           return (
                             <tr
@@ -502,31 +531,42 @@ export default function ComponentDetailsModal({
                                     isCheapest ? 'text-emerald-700' : 'text-slate-900'
                                   }`}
                                 >
-                                  {offerPrice > 0
+                                  {offerPrice != null
                                     ? formatPrice(offerPrice, offer.currency || 'INR')
-                                    : '—'}
+                                    : 'Price N/A'}
                                 </span>
                               </td>
 
                               <td className="px-4 py-3">
                                 <span
                                   className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                                    isAvailable
+                                    isAvailable === true
                                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                      : 'bg-rose-50 text-rose-700 border border-rose-200'
+                                      : isAvailable === false
+                                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                        : 'bg-slate-50 text-slate-600 border border-slate-200'
                                   }`}
                                 >
                                   <span
                                     className={`h-1.5 w-1.5 rounded-full ${
-                                      isAvailable ? 'bg-emerald-500' : 'bg-rose-500'
+                                      isAvailable === true
+                                        ? 'bg-emerald-500'
+                                        : isAvailable === false
+                                          ? 'bg-rose-500'
+                                          : 'bg-slate-400'
                                     }`}
                                   />
-                                  {offer.availability || (isAvailable ? 'In Stock' : 'Out of Stock')}
+                                  {offer.availability ||
+                                    (isAvailable === true
+                                      ? 'In Stock'
+                                      : isAvailable === false
+                                        ? 'Out of Stock'
+                                        : 'Unknown')}
                                 </span>
                               </td>
 
                               <td className="px-4 py-3 font-mono text-[11px] text-slate-500">
-                                {formatDate(offer.lastUpdated)}
+                                {formatDate(offer.lastUpdated ?? undefined)}
                               </td>
 
                               <td className="px-4 py-3 text-right">
@@ -554,7 +594,9 @@ export default function ComponentDetailsModal({
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
                   <HiOutlineShoppingCart className="mx-auto h-8 w-8 text-slate-300" />
-                  <p className="mt-2 text-xs font-semibold text-slate-700">No retailer prices recorded</p>
+                  <p className="mt-2 text-xs font-semibold text-slate-700">
+                    No retailer prices recorded
+                  </p>
                   <p className="mt-1 text-[11px] text-slate-400">
                     Add store prices manually or run scraper sync to fetch retailer data.
                   </p>
@@ -577,7 +619,10 @@ export default function ComponentDetailsModal({
                 {compatibilityEntries.length > 0 ? (
                   <div className="mt-4 divide-y divide-slate-100">
                     {compatibilityEntries.map(([key, val]) => (
-                      <div key={key} className="flex flex-col sm:flex-row sm:justify-between py-2.5 text-xs">
+                      <div
+                        key={key}
+                        className="flex flex-col sm:flex-row sm:justify-between py-2.5 text-xs"
+                      >
                         <span className="font-medium text-slate-600 capitalize">
                           {key.replace(/([A-Z])/g, ' $1').trim()}
                         </span>
@@ -589,9 +634,12 @@ export default function ComponentDetailsModal({
                   </div>
                 ) : (
                   <div className="mt-4 rounded-lg bg-slate-50 p-6 text-center text-xs text-slate-500">
-                    <p className="font-medium">No custom compatibility rules registered for this component.</p>
+                    <p className="font-medium">
+                      No custom compatibility rules registered for this component.
+                    </p>
                     <p className="mt-1 text-[11px] text-slate-400">
-                      Compatibility rules ensure automatic validation in the PC Builder engine (socket, form factor, power draw, clearance).
+                      Compatibility rules ensure automatic validation in the PC Builder engine
+                      (socket, form factor, power draw, clearance).
                     </p>
                   </div>
                 )}
@@ -610,9 +658,9 @@ export default function ComponentDetailsModal({
                     <p className="mt-1 font-mono text-base font-extrabold text-slate-900">
                       {String(
                         component.specifications?.tdp ||
-                        component.specifications?.powerConsumption ||
-                        component.specifications?.TDP ||
-                        'Not specified'
+                          component.specifications?.powerConsumption ||
+                          component.specifications?.TDP ||
+                          'Not specified',
                       )}
                     </p>
                   </div>
@@ -624,9 +672,9 @@ export default function ComponentDetailsModal({
                     <p className="mt-1 font-mono text-base font-extrabold text-slate-900">
                       {String(
                         component.specifications?.socket ||
-                        component.specifications?.interface ||
-                        component.specifications?.formFactor ||
-                        component.category
+                          component.specifications?.interface ||
+                          component.specifications?.formFactor ||
+                          component.category,
                       )}
                     </p>
                   </div>

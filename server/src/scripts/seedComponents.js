@@ -43,36 +43,24 @@ const urls = (name) => {
       storeName: 'MDComputers',
       productUrl: `https://www.mdcomputers.in/${s}`,
       currency: 'INR',
-      inStock: true,
-      availability: 'In Stock',
-      lastUpdated: new Date(),
     },
     {
       store: 'Vedant',
       storeName: 'Vedant',
       productUrl: `https://www.vedantcomputers.com/${s}`,
       currency: 'INR',
-      inStock: true,
-      availability: 'In Stock',
-      lastUpdated: new Date(),
     },
     {
       store: 'PrimeABGB',
       storeName: 'PrimeABGB',
       productUrl: `https://www.primeabgb.com/online-price-reviews-specs/${s}/`,
       currency: 'INR',
-      inStock: true,
-      availability: 'In Stock',
-      lastUpdated: new Date(),
     },
     {
       store: 'PCStudio',
       storeName: 'PCStudio',
       productUrl: `https://www.pcstudio.in/product/${s}/`,
       currency: 'INR',
-      inStock: true,
-      availability: 'In Stock',
-      lastUpdated: new Date(),
     },
   ];
 };
@@ -234,7 +222,11 @@ const RAW_COMPONENTS = [
   { name: 'NVIDIA GeForce RTX 4080 Super 16GB Founders Edition', brand: 'NVIDIA', category: 'GPU' },
   { name: 'ASUS TUF Gaming GeForce RTX 4080 Super 16GB OC', brand: 'ASUS', category: 'GPU' },
   { name: 'MSI GeForce RTX 4080 16GB Suprim X', brand: 'MSI', category: 'GPU' },
-  { name: 'NVIDIA GeForce RTX 4070 Ti Super 16GB Founders Edition', brand: 'NVIDIA', category: 'GPU' },
+  {
+    name: 'NVIDIA GeForce RTX 4070 Ti Super 16GB Founders Edition',
+    brand: 'NVIDIA',
+    category: 'GPU',
+  },
   { name: 'Gigabyte GeForce RTX 4070 Ti Super 16GB Aero OC', brand: 'Gigabyte', category: 'GPU' },
   { name: 'NVIDIA GeForce RTX 4070 Ti 12GB Founders Edition', brand: 'NVIDIA', category: 'GPU' },
   { name: 'ZOTAC Gaming GeForce RTX 4070 Ti 12GB Trinity OC', brand: 'Zotac', category: 'GPU' },
@@ -293,35 +285,111 @@ const RAW_COMPONENTS = [
   { name: 'Corsair Vengeance DDR5 16GB (2x8GB) 5600MHz CL36', brand: 'Corsair', category: 'RAM' },
   { name: 'Corsair Vengeance DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'Corsair', category: 'RAM' },
   { name: 'Corsair Vengeance DDR5 32GB (2x16GB) 6400MHz CL32', brand: 'Corsair', category: 'RAM' },
-  { name: 'Corsair Dominator Platinum DDR5 32GB (2x16GB) 6600MHz CL32', brand: 'Corsair', category: 'RAM' },
-  { name: 'Corsair Dominator Platinum DDR5 64GB (2x32GB) 6000MHz CL30', brand: 'Corsair', category: 'RAM' },
-  { name: 'Kingston Fury Beast DDR5 16GB (2x8GB) 5600MHz CL36', brand: 'Kingston', category: 'RAM' },
-  { name: 'Kingston Fury Beast DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'Kingston', category: 'RAM' },
-  { name: 'Kingston Fury Renegade DDR5 32GB (2x16GB) 6400MHz CL32', brand: 'Kingston', category: 'RAM' },
-  { name: 'Kingston Fury Renegade DDR5 64GB (2x32GB) 6400MHz CL32', brand: 'Kingston', category: 'RAM' },
-  { name: 'G.Skill Trident Z5 RGB DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'G.Skill', category: 'RAM' },
-  { name: 'G.Skill Trident Z5 RGB DDR5 32GB (2x16GB) 6400MHz CL32', brand: 'G.Skill', category: 'RAM' },
-  { name: 'G.Skill Trident Z5 Neo DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'G.Skill', category: 'RAM' },
-  { name: 'G.Skill Trident Z5 RGB DDR5 64GB (2x32GB) 6000MHz CL30', brand: 'G.Skill', category: 'RAM' },
+  {
+    name: 'Corsair Dominator Platinum DDR5 32GB (2x16GB) 6600MHz CL32',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Corsair Dominator Platinum DDR5 64GB (2x32GB) 6000MHz CL30',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Beast DDR5 16GB (2x8GB) 5600MHz CL36',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Beast DDR5 32GB (2x16GB) 6000MHz CL30',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Renegade DDR5 32GB (2x16GB) 6400MHz CL32',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Renegade DDR5 64GB (2x32GB) 6400MHz CL32',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
+  {
+    name: 'G.Skill Trident Z5 RGB DDR5 32GB (2x16GB) 6000MHz CL30',
+    brand: 'G.Skill',
+    category: 'RAM',
+  },
+  {
+    name: 'G.Skill Trident Z5 RGB DDR5 32GB (2x16GB) 6400MHz CL32',
+    brand: 'G.Skill',
+    category: 'RAM',
+  },
+  {
+    name: 'G.Skill Trident Z5 Neo DDR5 32GB (2x16GB) 6000MHz CL30',
+    brand: 'G.Skill',
+    category: 'RAM',
+  },
+  {
+    name: 'G.Skill Trident Z5 RGB DDR5 64GB (2x32GB) 6000MHz CL30',
+    brand: 'G.Skill',
+    category: 'RAM',
+  },
   { name: 'Crucial DDR5 16GB (1x16GB) 4800MHz CL40', brand: 'Crucial', category: 'RAM' },
   { name: 'Crucial DDR5 32GB (2x16GB) 5600MHz CL46', brand: 'Crucial', category: 'RAM' },
-  { name: 'TeamGroup T-Force Delta RGB DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'TeamGroup', category: 'RAM' },
+  {
+    name: 'TeamGroup T-Force Delta RGB DDR5 32GB (2x16GB) 6000MHz CL30',
+    brand: 'TeamGroup',
+    category: 'RAM',
+  },
   { name: 'ADATA XPG Lancer DDR5 32GB (2x16GB) 6000MHz CL30', brand: 'ADATA', category: 'RAM' },
   { name: 'ADATA XPG Lancer DDR5 16GB (2x8GB) 5600MHz CL36', brand: 'ADATA', category: 'RAM' },
 
   // --- DDR4 ---
-  { name: 'Corsair Vengeance LPX DDR4 16GB (2x8GB) 3200MHz CL16', brand: 'Corsair', category: 'RAM' },
-  { name: 'Corsair Vengeance LPX DDR4 16GB (2x8GB) 3600MHz CL18', brand: 'Corsair', category: 'RAM' },
-  { name: 'Corsair Vengeance LPX DDR4 32GB (2x16GB) 3200MHz CL16', brand: 'Corsair', category: 'RAM' },
-  { name: 'Corsair Vengeance LPX DDR4 32GB (2x16GB) 3600MHz CL18', brand: 'Corsair', category: 'RAM' },
-  { name: 'Kingston Fury Beast DDR4 16GB (2x8GB) 3200MHz CL16', brand: 'Kingston', category: 'RAM' },
-  { name: 'Kingston Fury Beast DDR4 32GB (2x16GB) 3200MHz CL16', brand: 'Kingston', category: 'RAM' },
+  {
+    name: 'Corsair Vengeance LPX DDR4 16GB (2x8GB) 3200MHz CL16',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Corsair Vengeance LPX DDR4 16GB (2x8GB) 3600MHz CL18',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Corsair Vengeance LPX DDR4 32GB (2x16GB) 3200MHz CL16',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Corsair Vengeance LPX DDR4 32GB (2x16GB) 3600MHz CL18',
+    brand: 'Corsair',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Beast DDR4 16GB (2x8GB) 3200MHz CL16',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
+  {
+    name: 'Kingston Fury Beast DDR4 32GB (2x16GB) 3200MHz CL16',
+    brand: 'Kingston',
+    category: 'RAM',
+  },
   { name: 'G.Skill Ripjaws V DDR4 16GB (2x8GB) 3200MHz CL16', brand: 'G.Skill', category: 'RAM' },
   { name: 'G.Skill Ripjaws V DDR4 32GB (2x16GB) 3600MHz CL18', brand: 'G.Skill', category: 'RAM' },
-  { name: 'G.Skill Trident Z Neo DDR4 32GB (2x16GB) 3600MHz CL16', brand: 'G.Skill', category: 'RAM' },
+  {
+    name: 'G.Skill Trident Z Neo DDR4 32GB (2x16GB) 3600MHz CL16',
+    brand: 'G.Skill',
+    category: 'RAM',
+  },
   { name: 'Crucial Ballistix DDR4 16GB (2x8GB) 3200MHz CL16', brand: 'Crucial', category: 'RAM' },
   { name: 'Crucial Ballistix DDR4 32GB (2x16GB) 3600MHz CL16', brand: 'Crucial', category: 'RAM' },
-  { name: 'TeamGroup T-Force Vulcan Z DDR4 16GB (2x8GB) 3200MHz CL16', brand: 'TeamGroup', category: 'RAM' },
+  {
+    name: 'TeamGroup T-Force Vulcan Z DDR4 16GB (2x8GB) 3200MHz CL16',
+    brand: 'TeamGroup',
+    category: 'RAM',
+  },
 
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  Storage / SSD (30 total)                                      ║
@@ -368,43 +436,115 @@ const RAW_COMPONENTS = [
   // ╚══════════════════════════════════════════════════════════════════╝
 
   { name: 'Corsair CV550 550W 80 Plus Bronze Non-Modular PSU', brand: 'Corsair', category: 'PSU' },
-  { name: 'Corsair CX650M 650W 80 Plus Bronze Semi-Modular PSU', brand: 'Corsair', category: 'PSU' },
+  {
+    name: 'Corsair CX650M 650W 80 Plus Bronze Semi-Modular PSU',
+    brand: 'Corsair',
+    category: 'PSU',
+  },
   { name: 'Corsair RM750e 750W 80 Plus Gold Fully Modular PSU', brand: 'Corsair', category: 'PSU' },
   { name: 'Corsair RM850x 850W 80 Plus Gold Fully Modular PSU', brand: 'Corsair', category: 'PSU' },
-  { name: 'Corsair RM1000x 1000W 80 Plus Gold Fully Modular PSU', brand: 'Corsair', category: 'PSU' },
-  { name: 'Corsair HX1200 1200W 80 Plus Platinum Fully Modular PSU', brand: 'Corsair', category: 'PSU' },
-  { name: 'Seasonic Focus GX-650 650W 80 Plus Gold Fully Modular PSU', brand: 'Seasonic', category: 'PSU' },
-  { name: 'Seasonic Focus GX-750 750W 80 Plus Gold Fully Modular PSU', brand: 'Seasonic', category: 'PSU' },
-  { name: 'Seasonic Focus GX-850 850W 80 Plus Gold Fully Modular PSU', brand: 'Seasonic', category: 'PSU' },
-  { name: 'Seasonic Focus PX-850 850W 80 Plus Platinum Fully Modular PSU', brand: 'Seasonic', category: 'PSU' },
-  { name: 'Seasonic Prime TX-1000 1000W 80 Plus Titanium Fully Modular PSU', brand: 'Seasonic', category: 'PSU' },
+  {
+    name: 'Corsair RM1000x 1000W 80 Plus Gold Fully Modular PSU',
+    brand: 'Corsair',
+    category: 'PSU',
+  },
+  {
+    name: 'Corsair HX1200 1200W 80 Plus Platinum Fully Modular PSU',
+    brand: 'Corsair',
+    category: 'PSU',
+  },
+  {
+    name: 'Seasonic Focus GX-650 650W 80 Plus Gold Fully Modular PSU',
+    brand: 'Seasonic',
+    category: 'PSU',
+  },
+  {
+    name: 'Seasonic Focus GX-750 750W 80 Plus Gold Fully Modular PSU',
+    brand: 'Seasonic',
+    category: 'PSU',
+  },
+  {
+    name: 'Seasonic Focus GX-850 850W 80 Plus Gold Fully Modular PSU',
+    brand: 'Seasonic',
+    category: 'PSU',
+  },
+  {
+    name: 'Seasonic Focus PX-850 850W 80 Plus Platinum Fully Modular PSU',
+    brand: 'Seasonic',
+    category: 'PSU',
+  },
+  {
+    name: 'Seasonic Prime TX-1000 1000W 80 Plus Titanium Fully Modular PSU',
+    brand: 'Seasonic',
+    category: 'PSU',
+  },
   { name: 'MSI MAG A650BN 650W 80 Plus Bronze Non-Modular PSU', brand: 'MSI', category: 'PSU' },
   { name: 'MSI MAG A750GL 750W 80 Plus Gold Fully Modular PSU', brand: 'MSI', category: 'PSU' },
-  { name: 'MSI MEG Ai1300P 1300W 80 Plus Platinum Fully Modular PSU', brand: 'MSI', category: 'PSU' },
-  { name: 'Gigabyte UD750GM 750W 80 Plus Gold Fully Modular PSU', brand: 'Gigabyte', category: 'PSU' },
-  { name: 'Gigabyte UD850GM PG5 850W 80 Plus Gold Fully Modular PSU', brand: 'Gigabyte', category: 'PSU' },
+  {
+    name: 'MSI MEG Ai1300P 1300W 80 Plus Platinum Fully Modular PSU',
+    brand: 'MSI',
+    category: 'PSU',
+  },
+  {
+    name: 'Gigabyte UD750GM 750W 80 Plus Gold Fully Modular PSU',
+    brand: 'Gigabyte',
+    category: 'PSU',
+  },
+  {
+    name: 'Gigabyte UD850GM PG5 850W 80 Plus Gold Fully Modular PSU',
+    brand: 'Gigabyte',
+    category: 'PSU',
+  },
   { name: 'Antec NeoECO Gold 650W 80 Plus Gold Semi-Modular PSU', brand: 'Antec', category: 'PSU' },
-  { name: 'Antec HCG-850 Gold 850W 80 Plus Gold Fully Modular PSU', brand: 'Antec', category: 'PSU' },
-  { name: 'Cooler Master MWE 550W 80 Plus Bronze Non-Modular PSU', brand: 'Cooler Master', category: 'PSU' },
-  { name: 'Deepcool PQ750M 750W 80 Plus Gold Fully Modular PSU', brand: 'Deepcool', category: 'PSU' },
+  {
+    name: 'Antec HCG-850 Gold 850W 80 Plus Gold Fully Modular PSU',
+    brand: 'Antec',
+    category: 'PSU',
+  },
+  {
+    name: 'Cooler Master MWE 550W 80 Plus Bronze Non-Modular PSU',
+    brand: 'Cooler Master',
+    category: 'PSU',
+  },
+  {
+    name: 'Deepcool PQ750M 750W 80 Plus Gold Fully Modular PSU',
+    brand: 'Deepcool',
+    category: 'PSU',
+  },
 
   // ╔══════════════════════════════════════════════════════════════════╗
   // ║  CPU Coolers (15 total)                                        ║
   // ╚══════════════════════════════════════════════════════════════════╝
 
   // --- Air Coolers ---
-  { name: 'Noctua NH-D15 chromax.black Dual Tower CPU Cooler', brand: 'Noctua', category: 'Cooler' },
+  {
+    name: 'Noctua NH-D15 chromax.black Dual Tower CPU Cooler',
+    brand: 'Noctua',
+    category: 'Cooler',
+  },
   { name: 'Noctua NH-D12L Low-Profile Dual Tower CPU Cooler', brand: 'Noctua', category: 'Cooler' },
   { name: 'Noctua NH-U12A chromax.black CPU Air Cooler', brand: 'Noctua', category: 'Cooler' },
   { name: 'Arctic Freezer 34 eSports DUO CPU Air Cooler', brand: 'Arctic', category: 'Cooler' },
   { name: 'Arctic Freezer 50 eSports CPU Air Cooler', brand: 'Arctic', category: 'Cooler' },
-  { name: 'Thermalright Peerless Assassin 120 SE CPU Air Cooler', brand: 'Thermalright', category: 'Cooler' },
+  {
+    name: 'Thermalright Peerless Assassin 120 SE CPU Air Cooler',
+    brand: 'Thermalright',
+    category: 'Cooler',
+  },
   { name: 'be quiet! Dark Rock Pro 5 CPU Air Cooler', brand: 'be quiet!', category: 'Cooler' },
   { name: 'Deepcool AK620 Dual Tower CPU Air Cooler', brand: 'Deepcool', category: 'Cooler' },
 
   // --- AIO Liquid Coolers ---
-  { name: 'Corsair iCUE H150i Elite Capellix XT 360mm AIO Liquid Cooler', brand: 'Corsair', category: 'Cooler' },
-  { name: 'Corsair iCUE H100i RGB Pro XT 240mm AIO Liquid Cooler', brand: 'Corsair', category: 'Cooler' },
+  {
+    name: 'Corsair iCUE H150i Elite Capellix XT 360mm AIO Liquid Cooler',
+    brand: 'Corsair',
+    category: 'Cooler',
+  },
+  {
+    name: 'Corsair iCUE H100i RGB Pro XT 240mm AIO Liquid Cooler',
+    brand: 'Corsair',
+    category: 'Cooler',
+  },
   { name: 'NZXT Kraken X73 360mm AIO Liquid Cooler', brand: 'NZXT', category: 'Cooler' },
   { name: 'NZXT Kraken X63 280mm AIO Liquid Cooler', brand: 'NZXT', category: 'Cooler' },
   { name: 'NZXT Kraken X53 240mm AIO Liquid Cooler', brand: 'NZXT', category: 'Cooler' },
@@ -416,17 +556,41 @@ const RAW_COMPONENTS = [
   // ╚══════════════════════════════════════════════════════════════════╝
 
   // --- AMD AM5 ---
-  { name: 'ASUS ROG Strix X870E-E Gaming WiFi ATX Motherboard', brand: 'ASUS', category: 'Motherboard' },
+  {
+    name: 'ASUS ROG Strix X870E-E Gaming WiFi ATX Motherboard',
+    brand: 'ASUS',
+    category: 'Motherboard',
+  },
   { name: 'MSI MAG B850 Tomahawk WiFi ATX Motherboard', brand: 'MSI', category: 'Motherboard' },
-  { name: 'Gigabyte B650 Aorus Elite AX V2 ATX Motherboard', brand: 'Gigabyte', category: 'Motherboard' },
-  { name: 'ASRock B650M Pro RS WiFi Micro-ATX Motherboard', brand: 'ASRock', category: 'Motherboard' },
+  {
+    name: 'Gigabyte B650 Aorus Elite AX V2 ATX Motherboard',
+    brand: 'Gigabyte',
+    category: 'Motherboard',
+  },
+  {
+    name: 'ASRock B650M Pro RS WiFi Micro-ATX Motherboard',
+    brand: 'ASRock',
+    category: 'Motherboard',
+  },
   { name: 'MSI MPG X870E Carbon WiFi ATX Motherboard', brand: 'MSI', category: 'Motherboard' },
 
   // --- Intel LGA1700 ---
-  { name: 'ASUS ROG Strix Z790-E Gaming WiFi II ATX Motherboard', brand: 'ASUS', category: 'Motherboard' },
+  {
+    name: 'ASUS ROG Strix Z790-E Gaming WiFi II ATX Motherboard',
+    brand: 'ASUS',
+    category: 'Motherboard',
+  },
   { name: 'MSI MAG Z790 Tomahawk WiFi ATX Motherboard', brand: 'MSI', category: 'Motherboard' },
-  { name: 'Gigabyte Z790 Aorus Elite AX DDR5 ATX Motherboard', brand: 'Gigabyte', category: 'Motherboard' },
-  { name: 'ASRock B760M Pro RS WiFi Micro-ATX Motherboard', brand: 'ASRock', category: 'Motherboard' },
+  {
+    name: 'Gigabyte Z790 Aorus Elite AX DDR5 ATX Motherboard',
+    brand: 'Gigabyte',
+    category: 'Motherboard',
+  },
+  {
+    name: 'ASRock B760M Pro RS WiFi Micro-ATX Motherboard',
+    brand: 'ASRock',
+    category: 'Motherboard',
+  },
   { name: 'ASUS ROG Maximus Z890 Hero ATX Motherboard', brand: 'ASUS', category: 'Motherboard' },
 
   // ╔══════════════════════════════════════════════════════════════════╗
@@ -436,7 +600,11 @@ const RAW_COMPONENTS = [
   { name: 'Lian Li Lancool 216 Mid Tower ATX Cabinet', brand: 'Lian Li', category: 'Cabinet' },
   { name: 'NZXT H7 Flow Mid Tower ATX Cabinet', brand: 'NZXT', category: 'Cabinet' },
   { name: 'Corsair 4000D Airflow Mid Tower ATX Cabinet', brand: 'Corsair', category: 'Cabinet' },
-  { name: 'Fractal Design North Mid Tower ATX Cabinet', brand: 'Fractal Design', category: 'Cabinet' },
+  {
+    name: 'Fractal Design North Mid Tower ATX Cabinet',
+    brand: 'Fractal Design',
+    category: 'Cabinet',
+  },
   { name: 'Phanteks Eclipse G360A Mid Tower ATX Cabinet', brand: 'Phanteks', category: 'Cabinet' },
 ];
 

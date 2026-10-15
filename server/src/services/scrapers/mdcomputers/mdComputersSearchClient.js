@@ -1,4 +1,5 @@
-import { chromium } from "playwright";
+import { chromium } from 'playwright';
+import { RetailerFetchError } from '../retailerMarkup.js';
 
 /**
  * Uses a headless Chromium browser to fetch MDComputers search results,
@@ -8,49 +9,49 @@ import { chromium } from "playwright";
  * calling service can handle it without crashing the orchestrator.
  */
 
-const BASE_URL = "https://www.mdcomputers.in";
-const SEARCH_PATH = "/catalogsearch/result/";
+const BASE_URL = 'https://www.mdcomputers.in';
+const SEARCH_PATH = '/catalogsearch/result/';
 const TIMEOUT_MS = 30_000;
 
 export async function fetchMdComputersSearchHtml(query) {
-  const searchQuery = String(query ?? "").trim();
-  if (!searchQuery) throw new Error("A valid search query is required.");
+  const searchQuery = String(query ?? '').trim();
+  if (!searchQuery) throw new Error('A valid search query is required.');
 
   let browser = null;
   try {
     browser = await chromium.launch({
       headless: true,
       args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-blink-features=AutomationControlled",
-        "--disable-dev-shm-usage",
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-dev-shm-usage',
       ],
     });
 
     const context = await browser.newContext({
       userAgent:
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+        '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       viewport: { width: 1280, height: 800 },
-      locale: "en-IN",
+      locale: 'en-IN',
       extraHTTPHeaders: {
-        "Accept-Language": "en-IN,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
+        'Accept-Language': 'en-IN,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
       },
     });
 
     // Remove Playwright fingerprints that websites use to detect headless mode
     await context.addInitScript(() => {
-      Object.defineProperty(navigator, "webdriver", { get: () => undefined });
+      Object.defineProperty(globalThis.navigator, 'webdriver', { get: () => undefined });
     });
 
     const page = await context.newPage();
     const url = `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(searchQuery)}`;
 
-    console.info("[MDComputers Playwright] Navigating.", { url });
+    console.info('[MDComputers Playwright] Navigating.', { url });
     const response = await page.goto(url, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_MS,
     });
 
@@ -59,37 +60,41 @@ export async function fetchMdComputersSearchHtml(query) {
         status: response?.status(),
         url,
       });
-      return null;
+      throw new RetailerFetchError(
+        `MDComputers returned HTTP ${response?.status() ?? 'no response'}.`,
+        response?.status(),
+      );
     }
 
     // Extra wait for JS-rendered product grid
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Wait for the custom theme product cards
     await page
       .waitForSelector('.product-grid-item, .product-entities-title', {
-        timeout: 10_000,
+        timeout: 5_000,
       })
       .catch(() => {
-        console.warn('[MDComputers Playwright] Product grid selector timed out — returning available HTML.');
+        console.warn(
+          '[MDComputers Playwright] Product grid selector timed out — returning available HTML.',
+        );
       });
 
     const html = await page.content();
-    console.info("[MDComputers Playwright] HTML fetched successfully.", {
+    console.info('[MDComputers Playwright] HTML fetched successfully.', {
       query: searchQuery,
       htmlLength: html.length,
     });
     return html;
   } catch (error) {
-    console.error("[MDComputers Playwright] Failed.", {
+    console.error('[MDComputers Playwright] Failed.', {
       query: searchQuery,
       message: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   } finally {
     if (browser) await browser.close().catch(() => {});
   }
 }
 
-export const buildSearchUrl = (query) =>
-  `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(query)}`;
+export const buildSearchUrl = (query) => `${BASE_URL}${SEARCH_PATH}?q=${encodeURIComponent(query)}`;

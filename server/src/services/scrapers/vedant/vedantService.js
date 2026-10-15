@@ -9,8 +9,13 @@ export async function scrapeVedantOffers(query) {
   const products = parseVedantSearchHtml(html);
   const updated = new Date().toISOString();
   const offers = products.map((product) => normalizeVedant({ ...product, updated }));
-  offers.filter((offer) => !offer.isValid).forEach((offer) => logInvalidOffer('Vedant', 'Discarding invalid parsed offer.', offer));
-  console.info('[Vedant Service] Scrape completed.', { query, offers: offers.filter((offer) => offer.isValid).length });
+  offers
+    .filter((offer) => !offer.isValid)
+    .forEach((offer) => logInvalidOffer('Vedant', 'Discarding invalid parsed offer.', offer));
+  console.info('[Vedant Service] Scrape completed.', {
+    query,
+    offers: offers.filter((offer) => offer.isValid).length,
+  });
   return offers.filter((offer) => offer.isValid);
 }
 

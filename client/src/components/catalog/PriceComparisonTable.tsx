@@ -8,10 +8,15 @@ interface PriceComparisonTableProps {
 }
 
 export default function PriceComparisonTable({ comparison }: PriceComparisonTableProps) {
-  const offers = [...(comparison?.prices ?? [])].sort(
-    (a, b) =>
-      (a.price ?? a.currentPrice ?? Infinity) - (b.price ?? b.currentPrice ?? Infinity),
-  );
+  const offers = [...(comparison?.prices ?? [])].sort((a, b) => {
+    const priceA = a.price ?? a.currentPrice;
+    const priceB = b.price ?? b.currentPrice;
+    const validA = priceA != null && Number.isFinite(priceA) && priceA > 0;
+    const validB = priceB != null && Number.isFinite(priceB) && priceB > 0;
+    if (!validA) return validB ? 1 : 0;
+    if (!validB) return -1;
+    return priceA - priceB;
+  });
 
   if (!comparison || offers.length === 0) {
     return (
@@ -25,10 +30,20 @@ export default function PriceComparisonTable({ comparison }: PriceComparisonTabl
     );
   }
 
-  const cheapestOffer = offers.find((offer) => (offer.inStock ?? true) && (offer.price ?? offer.currentPrice ?? 0) > 0) ?? offers[0];
-  const cheapestPrice = cheapestOffer ? (cheapestOffer.price ?? cheapestOffer.currentPrice ?? 0) : 0;
-  const highestPrice = Math.max(...offers.map((o) => o.price ?? o.currentPrice ?? 0));
-  const maxSavings = highestPrice > cheapestPrice && cheapestPrice > 0 ? highestPrice - cheapestPrice : 0;
+  const pricedOffers = offers.filter((offer) => {
+    const price = offer.price ?? offer.currentPrice;
+    return price != null && Number.isFinite(price) && price > 0 && offer.inStock === true;
+  });
+  const cheapestOffer = pricedOffers[0] ?? null;
+  const cheapestPrice = cheapestOffer
+    ? (cheapestOffer.price ?? cheapestOffer.currentPrice ?? null)
+    : null;
+  const highestPrice =
+    pricedOffers.length > 0
+      ? Math.max(...pricedOffers.map((offer) => offer.price ?? offer.currentPrice ?? 0))
+      : 0;
+  const maxSavings =
+    cheapestPrice != null && highestPrice > cheapestPrice ? highestPrice - cheapestPrice : 0;
 
   return (
     <div className="space-y-4 rounded-2xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-card">
@@ -39,9 +54,7 @@ export default function PriceComparisonTable({ comparison }: PriceComparisonTabl
               Live Multi-Store Comparison
             </span>
           </div>
-          <h3 className="mt-1 text-base font-extrabold text-slate-950">
-            Retailer Price Directory
-          </h3>
+          <h3 className="mt-1 text-base font-extrabold text-slate-950">Retailer Price Directory</h3>
           <p className="mt-0.5 text-xs text-slate-500">
             Comparing prices across {offers.length} verified Indian retailers
           </p>
@@ -50,11 +63,19 @@ export default function PriceComparisonTable({ comparison }: PriceComparisonTabl
         <div className="flex flex-col items-start sm:items-end gap-1">
           <div className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-50 border border-emerald-200/80 px-3 py-1.5 text-xs font-bold text-emerald-800 shadow-xs">
             <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Cheapest: {cheapestOffer ? formatPrice(cheapestPrice, cheapestOffer.currency ?? 'INR') : '—'}</span>
+            <span>
+              Cheapest:{' '}
+              {cheapestPrice != null
+                ? formatPrice(cheapestPrice, cheapestOffer?.currency ?? 'INR')
+                : 'Price N/A'}
+            </span>
           </div>
           {cheapestOffer && (
             <span className="text-[11px] font-semibold text-slate-500">
-              Sold by: <span className="text-slate-800 font-bold">{cheapestOffer.storeName || cheapestOffer.store}</span>
+              Sold by:{' '}
+              <span className="text-slate-800 font-bold">
+                {cheapestOffer.storeName || cheapestOffer.store}
+              </span>
             </span>
           )}
         </div>
@@ -69,7 +90,11 @@ export default function PriceComparisonTable({ comparison }: PriceComparisonTabl
             <strong className="font-mono font-bold text-emerald-950">
               {formatPrice(maxSavings, cheapestOffer?.currency ?? 'INR')}
             </strong>{' '}
-            by buying from <strong className="font-bold">{cheapestOffer?.storeName || cheapestOffer?.store}</strong> instead of the highest priced site.
+            by buying from{' '}
+            <strong className="font-bold">
+              {cheapestOffer?.storeName || cheapestOffer?.store}
+            </strong>{' '}
+            instead of the highest priced site.
           </span>
         </div>
       )}
@@ -98,15 +123,19 @@ export default function PriceComparisonTable({ comparison }: PriceComparisonTabl
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white text-xs">
-              {offers.map((offer: PriceOffer, index: number) => {
+              {offers.map((offer: PriceOffer) => {
+                const offerPrice = offer.price ?? offer.currentPrice;
                 const isCheapest =
-                  index === 0 ||
-                  ((cheapestOffer?.storeName === offer.storeName || cheapestOffer?.store === offer.store) &&
-                    cheapestOffer?.price === offer.price);
+                  cheapestOffer != null &&
+                  offerPrice != null &&
+                  offerPrice > 0 &&
+                  offerPrice === cheapestPrice &&
+                  (cheapestOffer.storeName === offer.storeName ||
+                    cheapestOffer.store === offer.store);
 
                 return (
                   <PriceOfferRow
-                    key={`${offer.storeName || offer.store}-${offer.productUrl}-${index}`}
+                    key={`${offer.storeName || offer.store}-${offer.productUrl}`}
                     offer={offer}
                     isCheapestAvailable={Boolean(isCheapest)}
                     cheapestPrice={cheapestPrice}

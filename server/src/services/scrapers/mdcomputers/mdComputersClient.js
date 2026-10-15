@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { RetailerFetchError } from '../retailerMarkup.js';
 
 /**
  * Fetches the full HTML of an MDComputers product detail page using
@@ -43,29 +44,28 @@ export async function fetchMdComputersPageHtml(productUrl) {
 
     // Remove Playwright fingerprints that websites use to detect headless mode.
     await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      Object.defineProperty(globalThis.navigator, 'webdriver', { get: () => undefined });
     });
 
     const page = await context.newPage();
 
     console.info('[MDComputers Client] Navigating to product page.', { url });
     const response = await page.goto(url, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_MS,
     });
 
     if (!response || response.status() >= 400) {
-      console.error('[MDComputers Client] Bad HTTP response.', {
-        status: response?.status(),
-        url,
-      });
-      return null;
+      throw new RetailerFetchError(
+        `MDComputers returned HTTP ${response?.status() ?? 'no response'}.`,
+        response?.status(),
+      );
     }
 
     // Wait for price element to render.
     await page
       .waitForSelector('.price .amount, .woocommerce-Price-amount, .amount', {
-        timeout: 10_000,
+        timeout: 5_000,
       })
       .catch(() => {
         console.warn('[MDComputers Client] Price selector timed out — returning available HTML.');
@@ -82,7 +82,7 @@ export async function fetchMdComputersPageHtml(productUrl) {
       url,
       message: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   } finally {
     if (browser) await browser.close().catch(() => {});
   }

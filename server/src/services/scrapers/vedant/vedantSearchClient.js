@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { RetailerFetchError } from '../retailerMarkup.js';
 
 const BASE_URL = 'https://www.vedantcomputers.com';
 const TIMEOUT_MS = 30_000;
@@ -38,7 +39,7 @@ export async function fetchVedantSearchHtml(query) {
 
     // Remove Playwright fingerprints
     await context.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+      Object.defineProperty(globalThis.navigator, 'webdriver', { get: () => undefined });
     });
 
     const page = await context.newPage();
@@ -46,7 +47,7 @@ export async function fetchVedantSearchHtml(query) {
 
     console.info('[Vedant Playwright] Navigating.', { url });
     const response = await page.goto(url, {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: TIMEOUT_MS,
     });
 
@@ -55,16 +56,19 @@ export async function fetchVedantSearchHtml(query) {
         status: response?.status(),
         url,
       });
-      return null;
+      throw new RetailerFetchError(
+        `Vedant returned HTTP ${response?.status() ?? 'no response'}.`,
+        response?.status(),
+      );
     }
 
     // Extra wait for lazy-loaded content (lozad.js)
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     // Wait for OpenCart Journal3 product cards
     await page
       .waitForSelector('.product-layout, .product-thumb', {
-        timeout: 10_000,
+        timeout: 5_000,
       })
       .catch(() => {
         console.warn('[Vedant Playwright] Product selector timed out — returning available HTML.');
@@ -81,7 +85,7 @@ export async function fetchVedantSearchHtml(query) {
       query: searchQuery,
       message: error instanceof Error ? error.message : String(error),
     });
-    return null;
+    throw error;
   } finally {
     if (browser) await browser.close().catch(() => {});
   }
